@@ -3,8 +3,11 @@ import random
 
 class generator:
     def __init__(self, seed, floor=10):
-        self.seed = seed
+        self.seed = seed  # unused
 
+        # holes in the floor are a feature
+
+        # a start to generate more world next to
         self.generated = {
             -1: floor,
             0: floor,
@@ -13,25 +16,30 @@ class generator:
 
         self.min_gen = -1
         self.min_gen_value = self.generated[self.min_gen]
+        self.min_gen_slope = 0
 
         self.max_gen = 1
         self.max_gen_value = self.generated[self.max_gen]
+        self.max_gen_slope = 0
 
     def gen(self, i):
         if i in self.generated:
             return self.generated[i]
         else:
+            # recursive, cannot teleport more than 40 * 999 blocks into not (yet) generated terrain
             if i < self.min_gen - 1:
                 self.gen(i + 1)
             elif i > self.max_gen + 1:
                 self.gen(i - 1)
 
             if i < self.min_gen:
-                self.min_gen_value += int(random.random() * 3) - 1
+                self.min_gen_slope = min(max(-1, self.min_gen_slope + int(random.random() * 3) - 1), 1)
+                self.min_gen_value += self.min_gen_slope
                 self.generated[i] = self.min_gen_value
                 self.min_gen = i
             elif i > self.max_gen:
-                self.max_gen_value += int(random.random() * 3) - 1
+                self.max_gen_slope = min(max(-1, self.max_gen_slope + int(random.random() * 3) - 1), 1)
+                self.max_gen_value += self.max_gen_slope
                 self.generated[i] = self.max_gen_value
                 self.max_gen = i
 

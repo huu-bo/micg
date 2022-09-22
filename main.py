@@ -4,13 +4,12 @@ import math
 pygame.init()
 
 VERSION = 'Alpha 0'
+size = 20
 
 gen = noise.generator(10)
 world = noise.world(gen)
 
 world.gen_chunk(0)
-
-size = 20
 
 px = 0.
 py = -20.
