@@ -3,7 +3,7 @@ import noise
 import math
 pygame.init()
 
-VERSION = 'Alpha 0'
+VERSION = 'Alpha 1'
 size = 20
 
 gen = noise.generator(10)
@@ -16,7 +16,7 @@ py = -20.
 pxv = 0.
 pyv = 0.
 
-pf = False
+pf = False  # player not on the ground
 
 run = True
 clock = pygame.time.Clock()
@@ -24,6 +24,7 @@ screen = pygame.display.set_mode((800, 800))
 pygame.display.set_caption('Mine and Craft game ' + VERSION)
 while run:
     clock.tick(60)
+    dt = 60 / max(clock.get_fps(), 0.001)  # delta time
     screen.fill((0, 0, 0))
 
     for event in pygame.event.get():
@@ -64,6 +65,16 @@ while run:
         pyv = 0
         py -= .01
         pf = True
+
+    hit = False
+    while world.get(math.floor(px) + 20, int(py) - 0) == 1 or world.get(math.ceil(px) + 20, int(py)) == 1:
+        pyv = 0
+        py += .01
+        hit = True
+    if hit:
+        py -= .01
+
+        print(py, 'hit')
 
     for y in range(min(800 // size, 40)):
         for x in range(min(800 // size, 40)):
