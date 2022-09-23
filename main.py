@@ -74,8 +74,6 @@ while run:
     if hit:
         py -= .01
 
-        print(py, 'hit')
-
     for y in range(min(800 // size, 40)):
         for x in range(min(800 // size, 40)):
             if world.get(x + int(px), y) == 1:
