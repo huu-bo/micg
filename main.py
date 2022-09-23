@@ -21,6 +21,15 @@ pyv = 0.
 
 pf = False  # player not on the ground
 
+
+def die():
+    global px, py, pxv, pyv
+    px = 0
+    py = 0
+    pxv = 0
+    pyv = 0
+
+
 run = True
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((800, 800))
@@ -77,6 +86,9 @@ while run:
         hit = True
     if hit:
         py -= .01
+
+    if py > 60:
+        die()
 
     for y in range(min(800 // size, 40)):
         for x in range(min(800 // size, 40)):
