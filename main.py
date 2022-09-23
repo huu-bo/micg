@@ -48,8 +48,9 @@ while run:
 
     if mouse_press[2]:
         world.set(int(mouse_pos[0] / size + px), mouse_pos[1] // size, block.block('air', blocks))
-    if mouse_press[0]:
-        world.set(int(mouse_pos[0] / size + px), mouse_pos[1] // size, block.block('grass', blocks))
+    if not world.get(int(mouse_pos[0] / size + px), mouse_pos[1] // size).solid:
+        if mouse_press[0]:
+            world.set(int(mouse_pos[0] / size + px), mouse_pos[1] // size, block.block('grass', blocks))
 
     # player physics
     px += pxv
@@ -79,10 +80,10 @@ while run:
 
     for y in range(min(800 // size, 40)):
         for x in range(min(800 // size, 40)):
-            b = world.get(x + int(px), y)
+            b = world.get(x + math.floor(px), y)
             if b is not None:
                 if b.render:
-                    pygame.draw.rect(screen, (0, 255, 0), (round((x - px % 1) * size), y * size, size, size))
+                    pygame.draw.rect(screen, b.color, (round((x - px % 1) * size), y * size, size, size))
 
             # if y == 0 and (int(px) - x) % 40 == 0:  # draw chunk borders
             #     pygame.draw.line(screen, (255, 0, 0), ((40 - x) * size, 0), ((40 - x) * size, 800))

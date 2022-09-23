@@ -24,6 +24,12 @@ class block:
             else:
                 print(name, "doesn't have property 'render'")
 
+            # optional parameters
+            if 'color' in blocks[name]:
+                self.color = tuple(blocks[name]['color'])
+            else:
+                self.color = (0, 255, 0)
+
             # template
             # if 'p' in blocks[name]:
             #     self.p = blocks[name]['p']
