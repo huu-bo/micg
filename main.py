@@ -46,12 +46,12 @@ while run:
     key = pygame.key.get_pressed()
     mouse_pos = pygame.mouse.get_pos()
     mouse_press = pygame.mouse.get_pressed(5)
-    if key[pygame.K_d]:
+    if key[pygame.K_d] or key[pygame.K_RIGHT]:
         pxv += .1
-    if key[pygame.K_a]:
+    if key[pygame.K_a] or key[pygame.K_LEFT]:
         pxv -= .1
 
-    if key[pygame.K_w]:
+    if key[pygame.K_w] or key[pygame.K_UP]:
         if pf:
             pyv = -.55
 
