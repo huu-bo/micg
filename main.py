@@ -74,6 +74,14 @@ while run:
     py += pyv
     pf = False
     pyv += .1
+
+    for i in range(int(pyv * 10)):
+        py += pyv / int(pyv * 10)
+
+        if world.get(math.floor(px) + 20, int(py) + 1).solid or world.get(math.ceil(px) + 20, int(py) + 1).solid:
+            pyv = 0
+            break
+
     while world.get(math.floor(px) + 20, int(py) + 1).solid or world.get(math.ceil(px) + 20, int(py) + 1).solid:
         pyv = 0
         py -= .01
