@@ -15,7 +15,7 @@ blocks = world.blocks
 world.gen_chunk(0)
 
 px = 0.
-py = -20.
+py = 0.
 pxv = 0.
 pyv = 0.
 
@@ -47,10 +47,10 @@ while run:
             pyv = -.55
 
     if mouse_press[2]:
-        world.set(int(mouse_pos[0] / size + px), mouse_pos[1] // size, block.block('air', blocks))
-    if not world.get(int(mouse_pos[0] / size + px), mouse_pos[1] // size).solid:
+        world.set(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size, block.block('air', blocks))
+    if not world.get(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size).solid:
         if mouse_press[0]:
-            world.set(int(mouse_pos[0] / size + px), mouse_pos[1] // size, block.block('grass', blocks))
+            world.set(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size, block.block('grass', blocks))
 
     # player physics
     px += pxv
@@ -71,7 +71,7 @@ while run:
         pf = True
 
     hit = False
-    while world.get(math.floor(px) + 20, int(py) - 0) == 1 or world.get(math.ceil(px) + 20, int(py)) == 1:
+    while world.get(math.floor(px) + 20, int(py) - 0).solid or world.get(math.ceil(px) + 20, int(py)).solid:
         pyv = 0
         py += .01
         hit = True
