@@ -5,7 +5,7 @@ import noise
 import math
 pygame.init()
 
-VERSION = 'Alpha 1'
+VERSION = 'Alpha 2'
 size = 20
 
 gen = noise.generator(10)
