@@ -1,4 +1,6 @@
 import pygame
+
+import block
 import noise
 import math
 pygame.init()
@@ -8,6 +10,7 @@ size = 20
 
 gen = noise.generator(10)
 world = noise.world(gen)
+blocks = world.blocks
 
 world.gen_chunk(0)
 
@@ -44,16 +47,16 @@ while run:
             pyv = -.55
 
     if mouse_press[2]:
-        world.set(int(mouse_pos[0] / size + px), mouse_pos[1] // size, 0)
+        world.set(int(mouse_pos[0] / size + px), mouse_pos[1] // size, block.block('air', blocks))
     if mouse_press[0]:
-        world.set(int(mouse_pos[0] / size + px), mouse_pos[1] // size, 1)
+        world.set(int(mouse_pos[0] / size + px), mouse_pos[1] // size, block.block('grass', blocks))
 
     # player physics
     px += pxv
-    while world.get(math.ceil(px) + 20, int(py) + 1) == 1:
+    while world.get(math.ceil(px) + 20, int(py) + 1).solid:
         px -= .01
         pxv = 0
-    while world.get(math.floor(px) + 20, int(py) + 1) == 1:
+    while world.get(math.floor(px) + 20, int(py) + 1).solid:
         px += .01
         pxv = 0
     pxv /= 2
@@ -61,7 +64,7 @@ while run:
     py += pyv
     pf = False
     pyv += .1
-    while world.get(math.floor(px) + 20, int(py) + 1) == 1 or world.get(math.ceil(px) + 20, int(py) + 1) == 1:
+    while world.get(math.floor(px) + 20, int(py) + 1).solid or world.get(math.ceil(px) + 20, int(py) + 1).solid:
         pyv = 0
         py -= .01
         pf = True
@@ -76,13 +79,15 @@ while run:
 
     for y in range(min(800 // size, 40)):
         for x in range(min(800 // size, 40)):
-            if world.get(x + int(px), y) == 1:
-                pygame.draw.rect(screen, (0, 255, 0), (round((x - px % 1) * size), y * size, size, size))
+            b = world.get(x + int(px), y)
+            if b is not None:
+                if b.render:
+                    pygame.draw.rect(screen, (0, 255, 0), (round((x - px % 1) * size), y * size, size, size))
 
             # if y == 0 and (int(px) - x) % 40 == 0:  # draw chunk borders
             #     pygame.draw.line(screen, (255, 0, 0), ((40 - x) * size, 0), ((40 - x) * size, 800))
 
-    pygame.draw.rect(screen, (255, 255, 0), (400, int(py * size), size, size))
+    pygame.draw.rect(screen, (255, 255, 0), (400, round(py * size), size, size))
 
     pygame.display.update()
 
