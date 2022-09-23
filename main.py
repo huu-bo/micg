@@ -32,7 +32,7 @@ def die():
 
 run = True
 clock = pygame.time.Clock()
-screen = pygame.display.set_mode((800, 800))
+screen = pygame.display.set_mode((size * 40, size * 40))
 pygame.display.set_caption('Mine and Craft game ' + VERSION)
 while run:
     clock.tick(60)
@@ -100,7 +100,7 @@ while run:
             # if y == 0 and (int(px) - x) % 40 == 0:  # draw chunk borders
             #     pygame.draw.line(screen, (255, 0, 0), ((40 - x) * size, 0), ((40 - x) * size, 800))
 
-    pygame.draw.rect(screen, (255, 255, 0), (400, round(py * size), size, size))
+    pygame.draw.rect(screen, (255, 255, 0), (screen.get_size()[0] // 2, round(py * size), size, size))
 
     pygame.display.update()
 
