@@ -1,5 +1,6 @@
 {
   "solid": true,
   "render": true,
-  "color": [50, 50, 50]
+  "color": [50, 50, 50],
+  "max support": -1
 }

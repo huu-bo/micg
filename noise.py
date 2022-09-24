@@ -67,11 +67,25 @@ class world:
             c.append(line)
 
         for i in range(40):
-            for y in range(self.gen.gen(i + x * 40)):
+            height = max(min(self.gen.gen(i + x * 40), 39), 0)
+            for y in range(height):
                 if y == 0:
                     b = block.block('bedrock', self.blocks)
-                else:
+
+                elif y == height - 1:
                     b = block.block('grass', self.blocks)
+                elif y == height - 2:
+                    b = block.block('grass', self.blocks)
+
+                elif y == height - 3:
+                    b = block.block('dirt', self.blocks)
+                elif y == height - 4:
+                    b = block.block('dirt', self.blocks)
+                elif y == height - 5:
+                    b = block.block('dirt', self.blocks)
+
+                else:
+                    b = block.block('stone', self.blocks)
 
                 b.x = i + x * 40
                 b.y = 39 - y
