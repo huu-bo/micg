@@ -27,6 +27,14 @@ for b in blocks:
     if blocks[b]['solid']:
         pi[b] = 0
 
+debug = {
+    'chunk_border': False,
+    'block_update': False,
+    'block_stress': False,
+    'player_info': False,
+    'to_update': False
+}
+
 
 def die():
     global px, py, pxv, pyv
@@ -41,6 +49,7 @@ run = True
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((size * 40, size * 40 + size * 2))
 pygame.display.set_caption('Mine and Craft game ' + VERSION)
+pre_mouse_press = [False] * 5
 while run:
     clock.tick(60)
     dt = 60 / max(clock.get_fps(), 0.001)  # delta time
@@ -51,8 +60,11 @@ while run:
             run = False
 
     key = pygame.key.get_pressed()
+    kmod = pygame.key.get_mods()
     mouse_pos = pygame.mouse.get_pos()
     mouse_press = pygame.mouse.get_pressed(5)
+    mouse_click = [mouse_press[i] and not pre_mouse_press[i] for i in range(5)]
+    pre_mouse_press = mouse_press
     if key[pygame.K_d] or key[pygame.K_RIGHT]:
         pxv += .1
     if key[pygame.K_a] or key[pygame.K_LEFT]:
@@ -122,46 +134,80 @@ while run:
             if b is not None:
                 if b.render:
                     pygame.draw.rect(screen, b.color, (round((x - px % 1) * size), y * size, size, size))
-                    # screen.blit(font.render(str(b.support), True, (100, 0, 0)), (round((x - px % 1) * size), y * size))
+                    if debug['block_stress']:
+                        screen.blit(font.render(str(b.support), True, (100, 0, 0)),
+                                    (round((x - px % 1) * size), y * size))
+
                     # screen.blit(font.render(str(b.y), True, (100, 0, 0)), (round((x - px % 1) * size), y * size))
 
-                # if b in world.to_update:
-                #     pygame.draw.rect(screen, (255, 0, 0), (round((x - px % 1) * size), y * size, size, size), 2)
+                if debug['block_update']:
+                    if b in world.to_update:
+                        pygame.draw.rect(screen, (255, 0, 0), (round((x - px % 1) * size), y * size, size, size), 2)
 
-            # if y == 0 and (int(px) - x) % 40 == 0:  # draw chunk borders
-            #     pygame.draw.line(screen, (255, 0, 0), ((40 - x) * size, 0), ((40 - x) * size, 800))
+            if debug['chunk_border']:
+                if y == 0 and (int(px) - x) % 40 == 0:  # draw chunk borders
+                    pygame.draw.line(screen, (255, 0, 0), ((40 - x) * size, 0), ((40 - x) * size, 800))
 
     pygame.draw.rect(screen, (255, 255, 0), (screen.get_size()[0] // 2, round(py * size), size, size))
 
-    if len(world.to_update) > 100:
+    if len(world.to_update) > 100 or debug['to_update']:
         screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (0, 0))
 
-    i = 0
-    for b in pi:
-        if 'color' in blocks[b]:
-            c = blocks[b]['color']
-        else:
-            c = (0, 255, 0)
+    # inventory ui, will not be drawn if debug menu is active
+    if not kmod & pygame.KMOD_LCTRL:
+        i = 0
+        for b in pi:
+            if 'color' in blocks[b]:
+                c = blocks[b]['color']
+            else:
+                c = (0, 255, 0)
 
-        pygame.draw.rect(screen, c, (i * size, size * 40, size, size))
-        screen.blit(font.render(str(pi[b]), True, (255, 255, 255)), (i * size, size * 41))
+            pygame.draw.rect(screen, c, (i * size, size * 40, size, size))
+            screen.blit(font.render(str(pi[b]), True, (255, 255, 255)), (i * size, size * 41))
 
-        if ps == b:
-            pygame.draw.rect(screen, ((255 - c[0]) % 255, (255 - c[1]) % 255, (255 - c[2]) % 255),
-                             (i * size, size * 40, size, size), 1)
+            if ps == b:
+                pygame.draw.rect(screen, ((255 - c[0]) % 255, (255 - c[1]) % 255, (255 - c[2]) % 255),
+                                 (i * size, size * 40, size, size), 1)
 
-        if size * 40 < mouse_pos[1] < size * 41:
-            if i * size < mouse_pos[0] < (i + 1) * size:
-                pygame.draw.rect(screen, ((255 - c[0]) % 255, (255 - c[1]) % 255, (255 - c[2]) % 255), (i * size, size * 40, size, size), 2)
+            if size * 40 < mouse_pos[1] < size * 41:
+                if i * size < mouse_pos[0] < (i + 1) * size:
+                    pygame.draw.rect(screen, ((255 - c[0]) % 255, (255 - c[1]) % 255, (255 - c[2]) % 255), (i * size, size * 40, size, size), 2)
 
-                if mouse_press[0]:
-                    ps = b
+                    if mouse_press[0]:
+                        ps = b
 
-                    pygame.draw.rect(screen, (255, 255, 255), (i * size, size * 40, size, size), 3)
+                        pygame.draw.rect(screen, (255, 255, 255), (i * size, size * 40, size, size), 3)
 
-        i += 1
+            i += 1
 
     world.update()
+
+    if debug['player_info']:
+        screen.blit(font.render(f'Position: {round(px, 4)} {round(py, 3)}', True, (255, 255, 255)), (10, 5))
+        screen.blit(font.render(f'Motion: {round(pxv, 4)} {round(pyv, 3)}', True, (255, 255, 255)), (10, 25))
+        screen.blit(font.render(f'onGround: {pf}', True, (255, 255, 255)), (10, 55))
+
+    if kmod & pygame.KMOD_LCTRL:  # debug menu
+        i = 0
+        for d in debug:
+            if debug[d]:
+                c = (0, 255, 0)
+            else:
+                c = (255, 0, 0)
+            if size * 40 < mouse_pos[1] < size * 41:
+                if i * size * 6 < mouse_pos[0] < (i + 1) * size * 6:
+                    if debug[d]:
+                        c = (200, 255, 200)
+                    else:
+                        c = (255, 100, 100)
+                    if mouse_click[0]:
+                        c = (255, 255, 255)
+                        debug[d] = not debug[d]
+            pygame.draw.rect(screen, c, (i * size * 6, size * 40, size * 6, size), 2)
+
+            screen.blit(font.render(d, True, (255, 255, 255)), (i * size * 6, size * 40))
+
+            i += 1
 
     pygame.display.update()
 
