@@ -14,6 +14,7 @@ class block:
     def __init__(self, name, blocks):
         self.blocks = blocks
         self.support = 0
+        self.name = name
 
         self.x = None  # should be set by noise.world.set()
         self.y = None

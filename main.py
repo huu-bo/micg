@@ -5,7 +5,7 @@ import noise
 import math
 pygame.init()
 
-VERSION = 'Alpha 2'
+VERSION = 'Alpha 3'
 size = 20
 
 gen = noise.generator(10)
@@ -14,12 +14,18 @@ blocks = world.blocks
 
 world.gen_chunk(0)
 
-px = 0.
+px = 0.  # player position
 py = 0.
-pxv = 0.
+pxv = 0.  # player velocity
 pyv = 0.
 
 pf = False  # player not on the ground
+ps = 'grass'  # player block selection
+
+pi = {}  # player inventory
+for b in blocks:
+    if blocks[b]['solid']:
+        pi[b] = 0
 
 
 def die():
@@ -33,7 +39,7 @@ def die():
 font = pygame.font.SysFont('ubuntu', int(size / 1.1))
 run = True
 clock = pygame.time.Clock()
-screen = pygame.display.set_mode((size * 40, size * 40))
+screen = pygame.display.set_mode((size * 40, size * 40 + size * 2))
 pygame.display.set_caption('Mine and Craft game ' + VERSION)
 while run:
     clock.tick(60)
@@ -57,14 +63,20 @@ while run:
             pyv = -.55
 
     if mouse_press[2]:
+        if world.get(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size).solid:
+            pi[world.get(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size).name] += 1
+
         b = block.block('air', blocks)
         world.set(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size, b)
         world.to_update.append(b)
     if not world.get(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size).solid:
         if mouse_press[0]:
-            b = block.block('grass', blocks)
-            world.set(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size, b)
-            world.to_update.append(b)
+            if pi[ps] > 0:
+                b = block.block(ps, blocks)
+                world.set(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size, b)
+                world.to_update.append(b)
+
+                pi[ps] -= 1
 
     # player physics
     px += pxv
@@ -122,6 +134,31 @@ while run:
 
     if len(world.to_update) > 100:
         screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (0, 0))
+
+    i = 0
+    for b in pi:
+        if 'color' in blocks[b]:
+            c = blocks[b]['color']
+        else:
+            c = (0, 255, 0)
+
+        pygame.draw.rect(screen, c, (i * size, size * 40, size, size))
+        screen.blit(font.render(str(pi[b]), True, (255, 255, 255)), (i * size, size * 41))
+
+        if ps == b:
+            pygame.draw.rect(screen, ((255 - c[0]) % 255, (255 - c[1]) % 255, (255 - c[2]) % 255),
+                             (i * size, size * 40, size, size), 1)
+
+        if size * 40 < mouse_pos[1] < size * 41:
+            if i * size < mouse_pos[0] < (i + 1) * size:
+                pygame.draw.rect(screen, ((255 - c[0]) % 255, (255 - c[1]) % 255, (255 - c[2]) % 255), (i * size, size * 40, size, size), 2)
+
+                if mouse_press[0]:
+                    ps = b
+
+                    pygame.draw.rect(screen, (255, 255, 255), (i * size, size * 40, size, size), 3)
+
+        i += 1
 
     world.update()
 
