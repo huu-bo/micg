@@ -76,7 +76,8 @@ while run:
                 world.set(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size, b)
                 world.to_update.append(b)
 
-                pi[ps] -= 1
+                if mouse_pos[1] < size * 40:
+                    pi[ps] -= 1
 
     # player physics
     px += pxv
