@@ -30,6 +30,7 @@ def die():
     pyv = 0
 
 
+font = pygame.font.SysFont('ubuntu', int(size / 1.1))
 run = True
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((size * 40, size * 40))
@@ -56,10 +57,14 @@ while run:
             pyv = -.55
 
     if mouse_press[2]:
-        world.set(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size, block.block('air', blocks))
+        b = block.block('air', blocks)
+        world.set(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size, b)
+        world.to_update.append(b)
     if not world.get(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size).solid:
         if mouse_press[0]:
-            world.set(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size, block.block('grass', blocks))
+            b = block.block('grass', blocks)
+            world.set(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size, b)
+            world.to_update.append(b)
 
     # player physics
     px += pxv
@@ -104,11 +109,18 @@ while run:
             if b is not None:
                 if b.render:
                     pygame.draw.rect(screen, b.color, (round((x - px % 1) * size), y * size, size, size))
+                    screen.blit(font.render(str(b.support), True, (100, 0, 0)), (round((x - px % 1) * size), y * size))
+                    # screen.blit(font.render(str(b.y), True, (100, 0, 0)), (round((x - px % 1) * size), y * size))
+
+                if b in world.to_update:
+                    pygame.draw.rect(screen, (255, 0, 0), (round((x - px % 1) * size), y * size, size, size), 2)
 
             # if y == 0 and (int(px) - x) % 40 == 0:  # draw chunk borders
             #     pygame.draw.line(screen, (255, 0, 0), ((40 - x) * size, 0), ((40 - x) * size, 800))
 
     pygame.draw.rect(screen, (255, 255, 0), (screen.get_size()[0] // 2, round(py * size), size, size))
+
+    world.update()
 
     pygame.display.update()
 

@@ -54,6 +54,10 @@ class world:
 
         self.blocks = block.load()
 
+        self.to_update = []
+
+        self.to_append = []
+
     def gen_chunk(self, x):
         c = []
         for y in range(40):
@@ -68,6 +72,10 @@ class world:
                     b = block.block('bedrock', self.blocks)
                 else:
                     b = block.block('grass', self.blocks)
+
+                b.x = i
+                b.y = 39 - y
+
                 c[39 - y][i] = b
 
         self.world[x] = c
@@ -82,10 +90,30 @@ class world:
             self.gen_chunk(x // 40)
             return self.get(x, y)
 
-    def set(self, x, y, value):
+    def set(self, x, y, value: block.block):
+        value.x = x
+        value.y = y
+
+        if 39 > y > 1:
+            self.to_append += [self.get(value.x - 1, value.y), self.get(value.x, value.y - 1),
+                               self.get(value.x + 1, value.y), self.get(value.x, value.y + 1), value]
+
         if x // 40 in self.world:
             if 40 > y > 0:
                 self.world[x // 40][y][x % 40] = value
         else:
             self.get(x, y)  # load the chunk
             self.world[x // 40][y][x % 40] = value
+
+    def update(self):
+        # print(self.to_update)
+        while len(self.to_update):
+            b = self.to_update[0]
+            if b.y is not None:
+                if b.y < 40:
+                    self.to_append += b.update(self)
+            self.to_update.pop(0)
+        for b in self.to_append:
+            if b not in self.to_update:
+                self.to_update.append(b)
+        self.to_append = []

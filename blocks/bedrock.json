@@ -1,5 +1,6 @@
 {
   "solid": true,
   "render": true,
-  "color": [100, 100, 100]
+  "color": [100, 100, 100],
+  "gravity": false
 }
