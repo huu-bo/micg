@@ -5,6 +5,7 @@ import noise
 import math
 pygame.init()
 
+# hold control for debug menu
 VERSION = 'Alpha 3'
 size = 20
 
