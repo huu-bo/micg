@@ -109,16 +109,19 @@ while run:
             if b is not None:
                 if b.render:
                     pygame.draw.rect(screen, b.color, (round((x - px % 1) * size), y * size, size, size))
-                    screen.blit(font.render(str(b.support), True, (100, 0, 0)), (round((x - px % 1) * size), y * size))
+                    # screen.blit(font.render(str(b.support), True, (100, 0, 0)), (round((x - px % 1) * size), y * size))
                     # screen.blit(font.render(str(b.y), True, (100, 0, 0)), (round((x - px % 1) * size), y * size))
 
-                if b in world.to_update:
-                    pygame.draw.rect(screen, (255, 0, 0), (round((x - px % 1) * size), y * size, size, size), 2)
+                # if b in world.to_update:
+                #     pygame.draw.rect(screen, (255, 0, 0), (round((x - px % 1) * size), y * size, size, size), 2)
 
             # if y == 0 and (int(px) - x) % 40 == 0:  # draw chunk borders
             #     pygame.draw.line(screen, (255, 0, 0), ((40 - x) * size, 0), ((40 - x) * size, 800))
 
     pygame.draw.rect(screen, (255, 255, 0), (screen.get_size()[0] // 2, round(py * size), size, size))
+
+    if len(world.to_update) > 100:
+        screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (0, 0))
 
     world.update()
 

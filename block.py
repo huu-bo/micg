@@ -45,6 +45,11 @@ class block:
             else:
                 self.gravity = True
 
+            if 'h support' in blocks[name]:
+                self.h_support = blocks[name]['h support']
+            else:
+                self.h_support = False
+
             # template
             # if 'p' in blocks[name]:
             #     self.p = blocks[name]['p']
@@ -67,7 +72,8 @@ class block:
         pre_y = self.y
 
         moved = False
-        if not world.get(self.x, self.y + 1).solid:
+        if (not world.get(self.x, self.y + 1).solid) and\
+                ((not world.get(self.x - 1, self.y + 1).solid) and (not world.get(self.x + 1, self.y).solid) or not self.h_support):
             world.set(self.x, self.y, block('air', self.blocks))
             self.y += 1
             world.set(self.x, self.y, self)
@@ -78,15 +84,15 @@ class block:
                     moved = True
                 self.support = world.get(self.x, self.y - 1).support + 1
 
-            # elif world.get(self.x + 1, self.y).solid:  # TODO: directional
-            #     if self.support != world.get(self.x + 1, self.y).support + 1:
-            #         moved = True
-            #     self.support = world.get(self.x + 1, self.y).support + 1
+            elif world.get(self.x + 1, self.y).solid and self.h_support:  # TODO: directional
+                if self.support != world.get(self.x + 1, self.y).support + 1:
+                    moved = True
+                self.support = world.get(self.x + 1, self.y).support + 1
 
-            # elif world.get(self.x - 1, self.y).solid:
-            #     if self.support != world.get(self.x - 1, self.y).support + 1:
-            #         moved = True
-            #     self.support = world.get(self.x - 1, self.y).support + 1
+            elif world.get(self.x - 1, self.y).solid and self.h_support:
+                if self.support != world.get(self.x - 1, self.y).support + 1:
+                    moved = True
+                self.support = world.get(self.x - 1, self.y).support + 1
 
             else:
                 if self.support != 0:
