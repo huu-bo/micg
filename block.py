@@ -19,6 +19,8 @@ class block:
         self.x = None  # should be set by noise.world.set()
         self.y = None
 
+        self.on_floor = False  # solid block under this block, only used if self.h_support
+
         if name in blocks:
             if 'solid' in blocks[name]:  # there has got to be a better way to do this
                 self.solid = blocks[name]['solid']
@@ -73,8 +75,19 @@ class block:
         pre_y = self.y
 
         moved = False
+
+        if world.get(self.x, self.y + 1).solid and self.h_support and not self.on_floor:
+            moved = True
+            self.on_floor = True
+        if (world.get(self.x - 1, self.y).solid or world.get(self.x + 1, self.y).solid) and\
+                not world.get(self.x, self.y + 1).solid:
+            self.on_floor = world.get(self.x - 1, self.y).on_floor or world.get(self.x + 1, self.y).on_floor
+
+            if not self.on_floor:
+                self.support += 1
+
         if (not world.get(self.x, self.y + 1).solid) and\
-                ((not world.get(self.x - 1, self.y + 1).solid) and (not world.get(self.x + 1, self.y).solid) or not self.h_support):
+                ((not world.get(self.x - 1, self.y).solid) and (not world.get(self.x + 1, self.y).solid) or not self.h_support):
             world.set(self.x, self.y, block('air', self.blocks))
             self.y += 1
             world.set(self.x, self.y, self)

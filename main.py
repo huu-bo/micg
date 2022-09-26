@@ -26,7 +26,7 @@ ps = 'grass'  # player block selection
 pi = {}  # player inventory
 for b in blocks:
     if blocks[b]['solid']:
-        pi[b] = 0
+        pi[b] = 99
 
 debug = {
     'chunk_border': False,
@@ -102,7 +102,6 @@ while run:
         pxv = 0
     pxv /= 2
 
-    py += pyv
     pf = False
     pyv += .1
 
@@ -138,6 +137,8 @@ while run:
                     if debug['block_stress']:
                         screen.blit(font.render(str(b.support), True, (100, 0, 0)),
                                     (round((x - px % 1) * size), y * size))
+
+                    pygame.draw.rect(screen, (0, b.on_floor * 255, 0), (round((x - px % 1) * size), y * size, size, size), 2)
 
                     # screen.blit(font.render(str(b.y), True, (100, 0, 0)), (round((x - px % 1) * size), y * size))
 

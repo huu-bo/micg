@@ -90,6 +90,8 @@ class world:
                 b.x = i + x * 40
                 b.y = 39 - y
 
+                b.support = height - y - 1
+
                 c[39 - y][i] = b
 
         self.world[x] = c
