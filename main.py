@@ -153,7 +153,7 @@ while run:
     pygame.draw.rect(screen, (255, 255, 0), (screen.get_size()[0] // 2, round(py * size), size, size))
 
     if len(world.to_update) > 100 or debug['to_update']:
-        screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (0, 0))
+        screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (10, 85))
 
     # inventory ui, will not be drawn if debug menu is active
     if not kmod & pygame.KMOD_LCTRL:
