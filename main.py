@@ -103,12 +103,12 @@ while run:
         pxv = 0
     pxv /= 2
 
-    py += pyv
+    # py += pyv
     pf = False
     pyv += .1
 
-    for i in range(int(pyv * 10)):
-        py += pyv / int(pyv * 10)
+    for i in range(10):
+        py += pyv / 10
 
         if world.get(math.floor(px) + 20, int(py) + 1).solid or world.get(math.ceil(px) + 20, int(py) + 1).solid:
             pyv = 0
