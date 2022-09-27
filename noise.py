@@ -91,6 +91,7 @@ class world:
                 b.y = 39 - y
 
                 b.support = height - y - 1
+                b.on_floor = True
 
                 c[39 - y][i] = b
 
@@ -121,10 +122,10 @@ class world:
             self.get(x, y)  # load the chunk
             self.world[x // 40][y][x % 40] = value
 
-    def update(self):
+    def update(self, fast=False):
         # print(self.to_update)
         i = 0
-        while len(self.to_update) and i < 100:
+        while len(self.to_update) and (i < 100 or fast):
             b = self.to_update[0]
             if b.y is not None:
                 if b.y < 40:

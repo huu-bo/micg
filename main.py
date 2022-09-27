@@ -33,7 +33,8 @@ debug = {
     'block_update': False,
     'block_stress': False,
     'player_info': False,
-    'to_update': False
+    'to_update': False,
+    'fast_physics': False
 }
 
 
@@ -102,6 +103,7 @@ while run:
         pxv = 0
     pxv /= 2
 
+    py += pyv
     pf = False
     pyv += .1
 
@@ -138,7 +140,7 @@ while run:
                         screen.blit(font.render(str(b.support), True, (100, 0, 0)),
                                     (round((x - px % 1) * size), y * size))
 
-                    pygame.draw.rect(screen, (0, b.on_floor * 255, 0), (round((x - px % 1) * size), y * size, size, size), 2)
+                    # pygame.draw.rect(screen, (0, b.on_floor * 255, 0), (round((x - px % 1) * size), y * size, size, size), 2)
 
                     # screen.blit(font.render(str(b.y), True, (100, 0, 0)), (round((x - px % 1) * size), y * size))
 
@@ -153,7 +155,7 @@ while run:
     pygame.draw.rect(screen, (255, 255, 0), (screen.get_size()[0] // 2, round(py * size), size, size))
 
     if len(world.to_update) > 100 or debug['to_update']:
-        screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (10, 85))
+        screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (10, 10 + 75 * debug['player_info']))
 
     # inventory ui, will not be drawn if debug menu is active
     if not kmod & pygame.KMOD_LCTRL:
@@ -182,7 +184,7 @@ while run:
 
             i += 1
 
-    world.update()
+    world.update(fast=debug['fast_physics'])
 
     if debug['player_info']:
         screen.blit(font.render(f'Position: {round(px, 4)} {round(py, 3)}', True, (255, 255, 255)), (10, 5))

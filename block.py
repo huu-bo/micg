@@ -76,9 +76,9 @@ class block:
 
         moved = False
 
-        if world.get(self.x, self.y + 1).solid and self.h_support and not self.on_floor:
+        if world.get(self.x, self.y + 1).solid and not self.on_floor and self.gravity:
             moved = True
-            self.on_floor = True
+            self.on_floor = world.get(self.x, self.y + 1).on_floor
         if (world.get(self.x - 1, self.y).solid or world.get(self.x + 1, self.y).solid) and\
                 not world.get(self.x, self.y + 1).solid:
             self.on_floor = world.get(self.x - 1, self.y).on_floor or world.get(self.x + 1, self.y).on_floor
@@ -132,8 +132,14 @@ class block:
             return [world.get(self.x - 1, self.y), world.get(self.x, self.y - 1),
                     world.get(self.x + 1, self.y), world.get(self.x, self.y + 1),
 
+                    world.get(self.x - 1, self.y - 1), world.get(self.x + 1, self.y - 1),
+                    world.get(self.x - 1, self.y + 1), world.get(self.x + 1, self.y + 1),
+
                     world.get(pre_x - 1, pre_y),
                     world.get(pre_x + 1, pre_y), world.get(pre_x, pre_y - 1),
+
+                    world.get(pre_x - 1, pre_y - 1), world.get(pre_x + 1, pre_y - 1),
+                    world.get(pre_x - 1, pre_y + 1), world.get(pre_x + 1, pre_y + 1),
 
                     self]
         else:
