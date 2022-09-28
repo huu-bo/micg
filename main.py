@@ -6,7 +6,7 @@ import math
 pygame.init()
 
 # hold control for debug menu
-VERSION = 'Alpha 3'
+VERSION = 'Alpha 4'
 size = 20
 
 gen = noise.generator(10)
