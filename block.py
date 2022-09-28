@@ -83,7 +83,7 @@ class block:
                 not world.get(self.x, self.y + 1).solid:
             self.on_floor = world.get(self.x - 1, self.y).on_floor or world.get(self.x + 1, self.y).on_floor
 
-            if not self.on_floor:
+            if not self.on_floor and self.h_support:
                 self.support += 1
 
         if (not world.get(self.x, self.y + 1).solid) and\
