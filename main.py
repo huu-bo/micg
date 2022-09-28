@@ -34,8 +34,10 @@ debug = {
     'block_stress': False,
     'player_info': False,
     'to_update': False,
-    'fast_physics': False
+    'fast_physics': False,
+    'prompt': False  # cannot start out True
 }
+prompt_text = ''
 
 
 def die():
@@ -61,7 +63,23 @@ while run:
         if event.type == pygame.QUIT:
             run = False
 
-    key = pygame.key.get_pressed()
+        if event.type == pygame.KEYDOWN and debug['prompt']:
+            if event.key == pygame.K_BACKSPACE:
+                prompt_text = prompt_text[:-1]
+            elif event.key != pygame.K_RETURN:
+                prompt_text += event.unicode
+            else:
+                if prompt_text.split(' ')[0] == '/kill':
+                    die()
+                elif prompt_text.split(' ')[0] == '/give':
+                    if len(prompt_text.split(' ')) == 3:
+                        if prompt_text.split(' ')[1] in blocks:
+                            pi[prompt_text.split(' ')[1]] += int(prompt_text.split(' ')[2])
+                prompt_text = ''
+                debug['prompt'] = False
+
+    if not debug['prompt']:
+        key = pygame.key.get_pressed()
     kmod = pygame.key.get_mods()
     mouse_pos = pygame.mouse.get_pos()
     mouse_press = pygame.mouse.get_pressed(5)
@@ -75,6 +93,12 @@ while run:
     if key[pygame.K_w] or key[pygame.K_UP]:
         if pf:
             pyv = -.55
+
+    if key[pygame.K_t]:
+        debug['prompt'] = True
+    if key[pygame.K_SLASH] and not debug['prompt']:
+        debug['prompt'] = True
+        prompt_text += '/'
 
     if mouse_press[2]:
         if world.get(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size).solid:
@@ -189,6 +213,13 @@ while run:
         screen.blit(font.render(f'Position: {round(px, 4)} {round(py, 3)}', True, (255, 255, 255)), (10, 5))
         screen.blit(font.render(f'Motion: {round(pxv, 4)} {round(pyv, 3)}', True, (255, 255, 255)), (10, 25))
         screen.blit(font.render(f'onGround: {pf}', True, (255, 255, 255)), (10, 55))
+
+    if debug['prompt']:
+        if pygame.time.get_ticks() // 200 % 2 == 0:
+            text = str(prompt_text)
+        else:
+            text = str(prompt_text) + '_'
+        screen.blit(font.render(text, True, (255, 255, 255), (0, 0, 0)), (10, 800))
 
     if kmod & pygame.KMOD_LCTRL:  # debug menu
         i = 0
