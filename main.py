@@ -103,7 +103,6 @@ while run:
         pxv = 0
     pxv /= 2
 
-    # py += pyv
     pf = False
     pyv += .1
 
