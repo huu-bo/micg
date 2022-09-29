@@ -198,8 +198,8 @@ while run:
     if len(world.to_update) > 100 or debug['to_update']:
         screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (10, 10 + 75 * debug['player_info']))
 
-    # inventory ui, will not be drawn if debug menu is active
-    if not kmod & pygame.KMOD_LCTRL:
+    # inventory ui, will not be drawn if debug menu is active of
+    if not kmod & pygame.KMOD_LCTRL and not debug['prompt']:
         i = 0
         for b in pi:
             if 'color' in blocks[b]:
