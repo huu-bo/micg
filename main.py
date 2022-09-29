@@ -75,6 +75,21 @@ while run:
                     if len(prompt_text.split(' ')) == 3:
                         if prompt_text.split(' ')[1] in blocks:
                             pi[prompt_text.split(' ')[1]] += int(prompt_text.split(' ')[2])
+                elif prompt_text.split(' ')[0] == '/load':
+                    if len(prompt_text.split(' ')) == 1:
+                        world.load()
+                    elif len(prompt_text.split(' ')) == 2:
+                        world.load(prompt_text.split(' ')[1] + '.json')
+                elif prompt_text.split(' ')[0] == '/save':
+                    if len(prompt_text.split(' ')) == 1:
+                        world.save()
+                    elif len(prompt_text.split(' ')) == 2:
+                        world.save(prompt_text.split(' ')[1] + '.json')
+                elif prompt_text.split(' ')[0] == '/tp':
+                    if len(prompt_text.split(' ')) == 2:
+                        px = float(prompt_text.split(' ')[1])
+                        py = 0
+
                 prompt_text = ''
                 debug['prompt'] = False
 
@@ -246,3 +261,4 @@ while run:
     pygame.display.update()
 
 pygame.quit()
+world.save()

@@ -1,5 +1,7 @@
+import os
 import random
 import block
+import json
 
 
 class generator:
@@ -27,7 +29,7 @@ class generator:
         if i in self.generated:
             return self.generated[i]
         else:
-            # recursive, cannot teleport more than 40 * 999 blocks into not generated terrain
+            # recursive, cannot teleport more than 999 blocks into not generated terrain
             if i < self.min_gen - 1:
                 self.gen(i + 1)
             elif i > self.max_gen + 1:
@@ -55,10 +57,18 @@ class world:
         self.blocks = block.load()
 
         self.to_update = []
-
         self.to_append = []
 
+        self.filename = None
+
     def gen_chunk(self, x):
+        # print('chunk', x)
+        # if self.filename is not None:
+        #     with open('saves/' + self.filename, 'r') as file:
+        #         w = json.load(file)
+        #         if x in w:
+        #             return w[x]
+
         c = []
         for y in range(40):
             line = []
@@ -138,3 +148,65 @@ class world:
                 if b not in self.to_update:
                     self.to_update.append(b)
             self.to_append = []
+
+        # TODO: chunk unloading
+
+    def save(self, file: str = None):
+        if file is not None:
+            self.filename = file
+
+        if self.filename is not None:
+            if self.filename not in os.listdir('saves'):
+                with open('saves/' + self.filename, 'w') as file:
+                    json.dump({}, file)
+
+            with open('saves/' + self.filename, 'r') as file:
+                w = json.load(file)
+            w2 = {}
+            for c in w:
+                if c not in self.world:
+                    w2[c] = w[c]
+                else:
+                    w2[c] = self.world[c]
+            for c in self.world:
+                if c not in w2:
+                    w2[c] = self.world[c]
+            with open('saves/' + self.filename, 'w') as file:
+                w3 = {}
+                for i in w2:
+                    c = []
+                    for j in w2[i]:
+                        row = []
+                        for b in j:
+                            row.append({'name': b.name, 'support': b.support})
+                        c.append(row)
+                    w3[i] = c
+                    print(i)
+                json.dump(w3, file)
+
+    def load(self, file: str = None):
+        if file is not None:
+            self.filename = file
+
+        if self.filename is not None:
+            with open('saves/' + self.filename, 'r') as file:
+                raw = json.load(file)
+
+                print([i for i in self.world])
+                self.world = {}
+                print([i for i in self.world])
+                # self.world = {0: [[block.block('air', self.blocks)] * 40] * 40}
+                for i in raw:
+                    c = []
+                    for j in raw[i]:
+                        row = []
+                        for ib in j:
+                            b = block.block(ib['name'], self.blocks)
+                            b.support = ib['support']
+                            row.append(b)
+                        c.append(row)
+                    self.world[i] = c
+
+                print('loaded')
+                print([i for i in self.world])
+                # print(self.world)
