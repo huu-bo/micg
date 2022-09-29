@@ -155,6 +155,9 @@ class world:
         # TODO: chunk unloading
 
     def save(self, file: str = None):
+        if 'saves' not in os.listdir('./'):
+            os.mkdir('saves')
+
         if file is not None:
             self.filename = file
 
@@ -182,7 +185,7 @@ class world:
                         row = []
                         for b in j:
                             if type(b) != block.block:
-                                print('error:', b)
+                                # print('error:', b)
                                 row.append({'name': 'air', 'support': 0})
                             else:
                                 row.append({'name': b.name, 'support': b.support})
