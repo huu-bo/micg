@@ -69,6 +69,9 @@ class world:
         #         if x in w:
         #             return w[x]
 
+        if x in self.world:
+            return
+
         c = []
         for y in range(40):
             line = []
@@ -178,10 +181,13 @@ class world:
                     for j in w2[i]:
                         row = []
                         for b in j:
-                            row.append({'name': b.name, 'support': b.support})
+                            if type(b) != block.block:
+                                print('error:', b)
+                                row.append({'name': 'air', 'support': 0})
+                            else:
+                                row.append({'name': b.name, 'support': b.support})
                         c.append(row)
                     w3[i] = c
-                    print(i)
                 json.dump(w3, file)
 
     def load(self, file: str = None):
@@ -192,21 +198,25 @@ class world:
             with open('saves/' + self.filename, 'r') as file:
                 raw = json.load(file)
 
-                print([i for i in self.world])
                 self.world = {}
-                print([i for i in self.world])
                 # self.world = {0: [[block.block('air', self.blocks)] * 40] * 40}
                 for i in raw:
                     c = []
+                    y = 0
                     for j in raw[i]:
                         row = []
+                        x = 0
                         for ib in j:
                             b = block.block(ib['name'], self.blocks)
                             b.support = ib['support']
+
+                            b.x = x
+                            b.y = y
+
                             row.append(b)
+                            x += 1
+                        y += 1
                         c.append(row)
-                    self.world[i] = c
+                    self.world[int(i)] = c
 
                 print('loaded')
-                print([i for i in self.world])
-                # print(self.world)

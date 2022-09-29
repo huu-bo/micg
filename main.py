@@ -66,6 +66,9 @@ while run:
         if event.type == pygame.KEYDOWN and debug['prompt']:
             if event.key == pygame.K_BACKSPACE:
                 prompt_text = prompt_text[:-1]
+            elif event.key == pygame.K_ESCAPE:
+                debug['prompt'] = False
+                prompt_text = ''
             elif event.key != pygame.K_RETURN:
                 prompt_text += event.unicode
             else:
