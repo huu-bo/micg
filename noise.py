@@ -48,6 +48,34 @@ class generator:
 
             return self.generated[i]
 
+    def load(self, raw: dict):
+        self.seed = raw['seed']
+
+        self.generated = raw['gen']
+
+        self.min_gen = raw['min_gen']
+        self.min_gen_value = raw['min_gen_value']
+        self.min_gen_slope = raw['min_gen_slope']
+
+        self.max_gen = raw['max_gen']
+        self.max_gen_value = raw['max_gen_value']
+        self.max_gen_slope = raw['max_gen_slope']
+
+    def save(self):
+        return {
+            'seed': self.seed,
+
+            'gen': self.generated,
+
+            'min_gen': self.min_gen,
+            'min_gen_value': self.min_gen_value,
+            'min_gen_slope': self.min_gen_slope,
+
+            'max_gen': self.max_gen,
+            'max_gen_value': self.max_gen_value,
+            'max_gen_slope': self.max_gen_slope,
+        }
+
 
 class world:
     def __init__(self, gen: generator):
@@ -191,11 +219,18 @@ class world:
                                 row.append({'name': b.name, 'support': b.support})
                         c.append(row)
                     w3[i] = c
+
+                w3['data'] = {}
+                w3['data']['gen'] = self.gen.save()
+
                 json.dump(w3, file)
 
     def load(self, file: str = None):
         if file is not None:
             self.filename = file
+
+        px = 0
+        py = 0
 
         if self.filename is not None:
             with open('saves/' + self.filename, 'r') as file:
@@ -204,22 +239,25 @@ class world:
                 self.world = {}
                 # self.world = {0: [[block.block('air', self.blocks)] * 40] * 40}
                 for i in raw:
-                    c = []
-                    y = 0
-                    for j in raw[i]:
-                        row = []
-                        x = 0
-                        for ib in j:
-                            b = block.block(ib['name'], self.blocks)
-                            b.support = ib['support']
+                    if i != 'data':
+                        c = []
+                        y = 0
+                        for j in raw[i]:
+                            row = []
+                            x = 0
+                            for ib in j:
+                                b = block.block(ib['name'], self.blocks)
+                                b.support = ib['support']
 
-                            b.x = x
-                            b.y = y
+                                b.x = x
+                                b.y = y
 
-                            row.append(b)
-                            x += 1
-                        y += 1
-                        c.append(row)
-                    self.world[int(i)] = c
+                                row.append(b)
+                                x += 1
+                            y += 1
+                            c.append(row)
+                        self.world[int(i)] = c
+                    else:
+                        self.gen.load(raw[i]['gen'])  # TODO: also load and save player position and inventory
 
                 print('loaded')
