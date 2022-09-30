@@ -198,7 +198,7 @@ while run:
     if len(world.to_update) > 100 or debug['to_update']:
         screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (10, 10 + 75 * debug['player_info']))
 
-    # inventory ui, will not be drawn if debug menu of chat is active
+    # inventory ui, will not be drawn if debug menu or chat is active
     if not kmod & pygame.KMOD_LCTRL and not debug['prompt']:
         i = 0
         for b in pi:
@@ -237,7 +237,7 @@ while run:
             text = str(prompt_text)
         else:
             text = str(prompt_text) + '_'
-        screen.blit(font.render(text, True, (255, 255, 255), (0, 0, 0)), (10, 800))
+        screen.blit(font.render(text, True, (255, 255, 255), (0, 0, 0)), (10, size * 40))
 
     if kmod & pygame.KMOD_LCTRL:  # debug menu
         i = 0
