@@ -89,7 +89,7 @@ while run:
                 elif prompt_text.split(' ')[0] == '/tp':
                     if len(prompt_text.split(' ')) == 2:
                         px = float(prompt_text.split(' ')[1])
-                        py = 0
+                        py = 39 - world.gen.gen(int(px))
 
                 prompt_text = ''
                 debug['prompt'] = False
