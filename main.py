@@ -13,8 +13,6 @@ gen = noise.generator(10)
 world = noise.world(gen)
 blocks = world.blocks
 
-world.gen_chunk(0)
-
 px = 0.  # player position
 py = 0.
 pxv = 0.  # player velocity

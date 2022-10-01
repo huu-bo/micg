@@ -98,7 +98,7 @@ class world:
 
         self.filename = None
 
-    def gen_chunk(self, x):
+    def gen_chunk(self, x, y):
         # print('chunk', x)
         # if self.filename is not None:
         #     with open('saves/' + self.filename, 'r') as file:
@@ -110,67 +110,63 @@ class world:
             return
 
         c = []
-        for y in range(40):
+        for dy in range(40):
             line = []
             for dx in range(40):
                 line.append(block.block('air', self.blocks))
             c.append(line)
 
-        for i in range(40):
-            height = max(min(self.gen.gen(i + x * 40), 39), 0)
-            for y in range(height):
-                if y == 0:
-                    b = block.block('bedrock', self.blocks)
+        if y <= 0:
+            for i in range(40):
+                height = self.gen.gen(i + x * 40) + y * 40
+                for dy in range(height):
+                    if dy == 0 and y == 0:
+                        b = block.block('bedrock', self.blocks)
 
-                elif y == height - 1:
-                    b = block.block('grass', self.blocks)
-                elif y == height - 2:
-                    b = block.block('grass', self.blocks)
+                    elif dy == height - 1:
+                        b = block.block('grass', self.blocks)
+                    elif dy == height - 2:
+                        b = block.block('grass', self.blocks)
 
-                elif y == height - 3:
-                    b = block.block('dirt', self.blocks)
-                elif y == height - 4:
-                    b = block.block('dirt', self.blocks)
-                elif y == height - 5:
-                    b = block.block('dirt', self.blocks)
+                    elif dy == height - 3:
+                        b = block.block('dirt', self.blocks)
+                    elif dy == height - 4:
+                        b = block.block('dirt', self.blocks)
+                    elif dy == height - 5:
+                        b = block.block('dirt', self.blocks)
 
-                else:
-                    b = block.block('stone', self.blocks)
+                    else:
+                        b = block.block('stone', self.blocks)
 
-                b.x = i + x * 40
-                b.y = 39 - y
+                    b.x = i + x * 40
+                    b.dy = 39 - dy
 
-                b.support = height - y - 1
-                b.on_floor = True
+                    b.support = height - dy - 1
+                    b.on_floor = True
 
-                c[39 - y][i] = b
+                    c[39 - dy][i % 40] = b
 
-        self.world[x] = c
+        self.world[(x, y)] = c
 
     def get(self, x, y):
-        if x // 40 in self.world:
-            if 40 > y > 0:
-                return self.world[x // 40][y][x % 40]
-            else:
-                return block.block('air', self.blocks)  # out of bounds
+        if (x // 40, y // 40) in self.world:
+            return self.world[(x // 40, y // 40)][y % 40][x % 40]
         else:
-            self.gen_chunk(x // 40)
+            self.gen_chunk(x // 40, y // 40)
             return self.get(x, y)
 
     def set(self, x, y, value: block.block):
         value.x = x
         value.y = y
 
-        if 39 > y > 1:
-            self.to_append += [self.get(value.x - 1, value.y), self.get(value.x, value.y - 1),
-                               self.get(value.x + 1, value.y), self.get(value.x, value.y + 1), value]
+        self.to_append += [self.get(value.x - 1, value.y), self.get(value.x, value.y - 1),
+                           self.get(value.x + 1, value.y), self.get(value.x, value.y + 1), value]
 
         if x // 40 in self.world:
-            if 40 > y > 0:
-                self.world[x // 40][y][x % 40] = value
+            self.world[x // 40][y][x % 40] = value
         else:
             self.get(x, y)  # load the chunk
-            self.world[x // 40][y][x % 40] = value
+            self.world[(x // 40, y // 40)][y % 40][x % 40] = value
 
     def update(self, fast=False):
         # print(self.to_update)
