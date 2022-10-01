@@ -119,17 +119,17 @@ while run:
         prompt_text += '/'
 
     if mouse_press[2]:
-        if world.get(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size).solid:
-            pi[world.get(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size).name] += 1
+        if world.get(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20).solid:
+            pi[world.get(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20).name] += 1
 
         b = block.block('air', blocks)
-        world.set(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size, b)
+        world.set(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20, b)
         world.to_update.append(b)
-    if not world.get(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size).solid:
+    if not world.get(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20).solid:
         if mouse_press[0]:
             if pi[ps] > 0:
                 b = block.block(ps, blocks)
-                world.set(math.floor(mouse_pos[0] / size + px), mouse_pos[1] // size, b)
+                world.set(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20, b)
                 world.to_update.append(b)
 
                 if mouse_pos[1] < size * 40:
@@ -173,10 +173,10 @@ while run:
 
     for y in range(min(800 // size, 40)):
         for x in range(min(800 // size, 40)):
-            b = world.get(x + math.floor(px), y)
+            b = world.get(x + math.floor(px), y + math.floor(py) - 20)
             if b is not None:
                 if b.render:
-                    pygame.draw.rect(screen, b.color, (round((x - px % 1) * size), y * size, size, size))
+                    pygame.draw.rect(screen, b.color, (round((x - px % 1) * size), round((y - py % 1) * size), size, size))
                     if debug['block_stress']:
                         screen.blit(font.render(str(b.support), True, (100, 0, 0)),
                                     (round((x - px % 1) * size), y * size))
@@ -189,7 +189,8 @@ while run:
                 if y == 0 and (int(px) - x) % 40 == 0:  # draw chunk borders
                     pygame.draw.line(screen, (255, 0, 0), ((40 - x) * size, 0), ((40 - x) * size, 800))
 
-    pygame.draw.rect(screen, (255, 255, 0), (screen.get_size()[0] // 2, round(py * size), size, size))
+    # draw player
+    pygame.draw.rect(screen, (255, 255, 0), (screen.get_size()[0] // 2, screen.get_size()[1] // 2 - size, size, size))
 
     if len(world.to_update) > 100 or debug['to_update']:
         screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (10, 10 + 75 * debug['player_info']))
