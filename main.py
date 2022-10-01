@@ -135,10 +135,10 @@ while run:
 
     # player physics
     px += pxv
-    while world.get(math.ceil(px) + 20, int(py) + 1).solid:
+    while world.get(math.ceil(px) + 20, math.floor(py) + 1).solid:
         px -= .01
         pxv = 0
-    while world.get(math.floor(px) + 20, int(py) + 1).solid:
+    while world.get(math.floor(px) + 20, math.floor(py) + 1).solid:
         px += .01
         pxv = 0
     pxv /= 2
@@ -149,17 +149,17 @@ while run:
     for i in range(10):
         py += pyv / 10
 
-        if world.get(math.floor(px) + 20, int(py) + 1).solid or world.get(math.ceil(px) + 20, int(py) + 1).solid:
+        if world.get(math.floor(px) + 20, math.floor(py) + 1).solid or world.get(math.ceil(px) + 20, math.floor(py) + 1).solid:
             pyv = 0
             break
 
-    while world.get(math.floor(px) + 20, int(py) + 1).solid or world.get(math.ceil(px) + 20, int(py) + 1).solid:
+    while world.get(math.floor(px) + 20, math.floor(py) + 1).solid or world.get(math.ceil(px) + 20, math.floor(py) + 1).solid:
         pyv = 0
         py -= .01
         pf = True
 
     hit = False
-    while world.get(math.floor(px) + 20, int(py) - 0).solid or world.get(math.ceil(px) + 20, int(py)).solid:
+    while world.get(math.floor(px) + 20, math.floor(py) - 0).solid or world.get(math.ceil(px) + 20, math.floor(py)).solid:
         pyv = 0
         py += .01
         hit = True

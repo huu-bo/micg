@@ -119,7 +119,7 @@ class world:
         if y <= 0:
             for i in range(40):
                 height = self.gen.gen(i + x * 40) + y * 40
-                for dy in range(height):
+                for dy in range(min(height, 40)):
                     if dy == 0 and y == 0:
                         b = block.block('bedrock', self.blocks)
 
@@ -139,7 +139,7 @@ class world:
                         b = block.block('stone', self.blocks)
 
                     b.x = i + x * 40
-                    b.y = 39 - dy
+                    b.y = 39 - dy + y * 40
 
                     b.support = height - dy - 1
                     b.on_floor = True
