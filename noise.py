@@ -139,7 +139,7 @@ class world:
                         b = block.block('stone', self.blocks)
 
                     b.x = i + x * 40
-                    b.dy = 39 - dy
+                    b.y = 39 - dy
 
                     b.support = height - dy - 1
                     b.on_floor = True
@@ -159,14 +159,15 @@ class world:
         value.x = x
         value.y = y
 
-        self.to_append += [self.get(value.x - 1, value.y), self.get(value.x, value.y - 1),
-                           self.get(value.x + 1, value.y), self.get(value.x, value.y + 1), value]
+        if y < 40:
+            self.to_append += [self.get(value.x - 1, value.y), self.get(value.x, value.y - 1),
+                               self.get(value.x + 1, value.y), self.get(value.x, value.y + 1), value]
 
-        if x // 40 in self.world:
-            self.world[x // 40][y][x % 40] = value
-        else:
-            self.get(x, y)  # load the chunk
-            self.world[(x // 40, y // 40)][y % 40][x % 40] = value
+            if x // 40 in self.world:
+                self.world[x // 40][y][x % 40] = value
+            else:
+                self.get(x, y)  # load the chunk
+                self.world[(x // 40, y // 40)][y % 40][x % 40] = value
 
     def update(self, fast=False):
         # print(self.to_update)

@@ -177,11 +177,11 @@ while run:
                     pygame.draw.rect(screen, b.color, (round((x - px % 1) * size), round((y - py % 1) * size), size, size))
                     if debug['block_stress']:
                         screen.blit(font.render(str(b.support), True, (100, 0, 0)),
-                                    (round((x - px % 1) * size), y * size))
+                                    (round((x - px % 1) * size), round((y - py % 1) * size)))
 
                 if debug['block_update']:
                     if b in world.to_update:
-                        pygame.draw.rect(screen, (255, 0, 0), (round((x - px % 1) * size), y * size, size, size), 2)
+                        pygame.draw.rect(screen, (255, 0, 0), (round((x - px % 1) * size), round((y - py % 1) * size), size, size), 2)
 
             if debug['chunk_border']:
                 if y == 0 and (int(px) - x) % 40 == 0:  # draw chunk borders
