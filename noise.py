@@ -29,18 +29,27 @@ class generator:
         if i in self.generated:
             return self.generated[i]
         else:
-            # recursive, cannot teleport more than 999 blocks into not generated terrain
             if i < self.min_gen - 1:
-                self.gen(i + 1)
+                for x in range(self.min_gen, i - 1, -1):
+                    self._gen(x)
             elif i > self.max_gen + 1:
-                self.gen(i - 1)
+                for x in range(self.max_gen, i + 1):
+                    self._gen(x)
+            else:
+                self._gen(i)
 
-            if i < self.min_gen:
+            return self.generated[i]
+
+    def _gen(self, i):
+        if i in self.generated:
+            return self.generated[i]
+        else:
+            if i == self.min_gen - 1:
                 self.min_gen_slope = min(max(-1, self.min_gen_slope + int(random.random() * 3) - 1), 1)
                 self.min_gen_value += self.min_gen_slope
                 self.generated[i] = self.min_gen_value
                 self.min_gen = i
-            elif i > self.max_gen:
+            elif i == self.max_gen + 1:
                 self.max_gen_slope = min(max(-1, self.max_gen_slope + int(random.random() * 3) - 1), 1)
                 self.max_gen_value += self.max_gen_slope
                 self.generated[i] = self.max_gen_value

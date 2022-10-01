@@ -6,7 +6,7 @@ import math
 pygame.init()
 
 # hold control for debug menu
-VERSION = 'Alpha 4'
+VERSION = 'Alpha 5'
 size = 20
 
 gen = noise.generator(10)
@@ -180,10 +180,6 @@ while run:
                     if debug['block_stress']:
                         screen.blit(font.render(str(b.support), True, (100, 0, 0)),
                                     (round((x - px % 1) * size), y * size))
-
-                    # pygame.draw.rect(screen, (0, b.on_floor * 255, 0), (round((x - px % 1) * size), y * size, size, size), 2)
-
-                    # screen.blit(font.render(str(b.y), True, (100, 0, 0)), (round((x - px % 1) * size), y * size))
 
                 if debug['block_update']:
                     if b in world.to_update:
