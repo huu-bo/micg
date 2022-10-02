@@ -138,9 +138,9 @@ class world:
                         b = block.block('dirt', self.blocks)
 
                     else:
-                        if height - dy - 1 > 100 and random.random() > .99:
+                        if height - dy - 1 > 100 and random.random() > .99 - (height - dy - 101) / 50:
                             b = block.block('diamond', self.blocks)
-                        elif height - dy - 1 > 100 and random.random() > .9:
+                        elif height - dy - 1 > 100 and random.random() > .9 - (height - dy - 101) / 50:
                             b = block.block('coal', self.blocks)
                         else:
                             b = block.block('stone', self.blocks)
