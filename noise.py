@@ -139,7 +139,7 @@ class world:
 
                     else:
                         if height - dy - 1 > 100 and random.random() > .99:
-                            b = block.block('coal', self.blocks)
+                            b = block.block('diamond', self.blocks)
                         elif height - dy - 1 > 100 and random.random() > .9:
                             b = block.block('coal', self.blocks)
                         else:
