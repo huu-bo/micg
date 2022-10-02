@@ -53,11 +53,6 @@ class block:
             else:
                 self.h_support = False
 
-            if 'pressure' in blocks[name]:
-                self.form_pressure = blocks[name]['pressure']
-            else:
-                self.form_pressure = -1
-
             # template
             # if 'p' in blocks[name]:
             #     self.p = blocks[name]['p']
@@ -71,6 +66,9 @@ class block:
 
             self.color = (255, 30, 30)
             self.max_support = 1
+
+            self.gravity = True
+            self.h_support = False
 
     def update(self, world):
         if self.x is None or not self.solid or not self.gravity:

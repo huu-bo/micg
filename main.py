@@ -222,10 +222,13 @@ while run:
     if not kmod & pygame.KMOD_LCTRL and not debug['prompt']:
         i = 0
         for b in pi:
-            if 'color' in blocks[b]:
-                c = blocks[b]['color']
+            if b in blocks:
+                if 'color' in blocks[b]:
+                    c = blocks[b]['color']
+                else:
+                    c = (0, 255, 0)
             else:
-                c = (0, 255, 0)
+                c = (255, 10, 10)
 
             pygame.draw.rect(screen, c, (i * size, size * 40, size, size))
             screen.blit(font.render(str(pi[b]), True, (255, 255, 255)), (i * size, size * 41))
