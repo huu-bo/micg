@@ -53,6 +53,11 @@ class block:
             else:
                 self.h_support = False
 
+            if 'pressure' in blocks[name]:
+                self.form_pressure = blocks[name]['pressure']
+            else:
+                self.form_pressure = -1
+
             # template
             # if 'p' in blocks[name]:
             #     self.p = blocks[name]['p']

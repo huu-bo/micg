@@ -136,7 +136,12 @@ class world:
                         b = block.block('dirt', self.blocks)
 
                     else:
-                        b = block.block('stone', self.blocks)
+                        if height - dy - 1 > 100 and random.random() > .9:
+                            b = block.block('coal', self.blocks)
+                        elif height - dy - 1 > 100 and random.random() > .99:
+                            b = block.block('coal', self.blocks)
+                        else:
+                            b = block.block('stone', self.blocks)
 
                     b.x = i + x * 40
                     b.y = 39 - dy + y * 40
