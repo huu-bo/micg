@@ -54,6 +54,8 @@ class generator:
                 self.max_gen_value += self.max_gen_slope
                 self.generated[i] = self.max_gen_value
                 self.max_gen = i
+            else:
+                self.generated[i] = 10
 
             return self.generated[i]
 
@@ -136,9 +138,9 @@ class world:
                         b = block.block('dirt', self.blocks)
 
                     else:
-                        if height - dy - 1 > 100 and random.random() > .9:
+                        if height - dy - 1 > 100 and random.random() > .99:
                             b = block.block('coal', self.blocks)
-                        elif height - dy - 1 > 100 and random.random() > .99:
+                        elif height - dy - 1 > 100 and random.random() > .9:
                             b = block.block('coal', self.blocks)
                         else:
                             b = block.block('stone', self.blocks)
@@ -205,22 +207,22 @@ class world:
                 with open('saves/' + self.filename, 'w') as file:
                     json.dump({}, file)
 
-            with open('saves/' + self.filename, 'r') as file:
-                w = json.load(file)
-            w2 = {}
-            for c in w:
-                if c not in self.world:
-                    w2[c] = w[c]
-                else:
-                    w2[c] = self.world[c]
-            for c in self.world:
-                if c not in w2:
-                    w2[c] = self.world[c]
+            # with open('saves/' + self.filename, 'r') as file:
+            #     w = json.load(file)
+            # w2 = {}
+            # for c in w:
+            #     if c not in self.world:
+            #         w2[c] = w[c]
+            #     else:
+            #         w2[c] = self.world[c]
+            # for c in self.world:
+            #     if c not in w2:
+            #         w2[c] = self.world[c]
             with open('saves/' + self.filename, 'w') as file:
                 w3 = {}
-                for i in w2:
+                for i in self.world:
                     c = []
-                    for j in w2[i]:
+                    for j in self.world[i]:
                         row = []
                         for b in j:
                             if type(b) != block.block:
@@ -229,7 +231,7 @@ class world:
                             else:
                                 row.append({'name': b.name, 'support': b.support})
                         c.append(row)
-                    w3[i] = c
+                    w3[str(i[0]) + ' ' + str(i[1])] = c
 
                 w3['data'] = {}
                 w3['data']['gen'] = self.gen.save()
@@ -240,22 +242,18 @@ class world:
         if file is not None:
             self.filename = file
 
-        px = 0
-        py = 0
-
         if self.filename is not None:
             with open('saves/' + self.filename, 'r') as file:
                 raw = json.load(file)
 
                 self.world = {}
-                # self.world = {0: [[block.block('air', self.blocks)] * 40] * 40}
                 for i in raw:
                     if i != 'data':
                         c = []
-                        y = 0
+                        y = int(i.split(' ')[1]) * 40
                         for j in raw[i]:
                             row = []
-                            x = 0
+                            x = int(i.split(' ')[0]) * 40
                             for ib in j:
                                 b = block.block(ib['name'], self.blocks)
                                 b.support = ib['support']
@@ -263,11 +261,14 @@ class world:
                                 b.x = x
                                 b.y = y
 
+                                b.on_floor = True
+
                                 row.append(b)
                                 x += 1
                             y += 1
                             c.append(row)
-                        self.world[int(i)] = c
+                        # print(i)
+                        self.world[(int(i.split(' ')[0]), int(i.split(' ')[1]))] = c
                     else:
                         self.gen.load(raw[i]['gen'])  # TODO: also load and save player position and inventory
 
