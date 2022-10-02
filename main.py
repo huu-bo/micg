@@ -8,6 +8,7 @@ pygame.init()
 # hold control for debug menu
 VERSION = 'Alpha 6'
 size = 20
+creative = False
 
 gen = noise.generator(10)
 world = noise.world(gen)
@@ -24,7 +25,7 @@ ps = 'grass'  # player block selection
 pi = {}  # player inventory
 for b in blocks:
     if blocks[b]['solid']:
-        pi[b] = 99
+        pi[b] = 99 * creative
 
 debug = {
     'chunk_border': False,
@@ -40,10 +41,16 @@ prompt_text = ''
 
 def die():
     global px, py, pxv, pyv
+    global pi, blocks
+
     px = 0
     py = 0
     pxv = 0
     pyv = 0
+
+    for b in blocks:
+        if blocks[b]['solid']:
+            pi[b] = 0
 
 
 font = pygame.font.SysFont('ubuntu', int(size / 1.1))
@@ -70,13 +77,8 @@ while run:
             elif event.key != pygame.K_RETURN:
                 prompt_text += event.unicode
             else:
-                if prompt_text.split(' ')[0] == '/kill':
-                    die()
-                elif prompt_text.split(' ')[0] == '/give':
-                    if len(prompt_text.split(' ')) == 3:
-                        if prompt_text.split(' ')[1] in blocks:
-                            pi[prompt_text.split(' ')[1]] += int(prompt_text.split(' ')[2])
-                elif prompt_text.split(' ')[0] == '/load':
+                # saving and loading
+                if prompt_text.split(' ')[0] == '/load':
                     if len(prompt_text.split(' ')) == 1:
                         world.load()
                     elif len(prompt_text.split(' ')) == 2:
@@ -84,16 +86,24 @@ while run:
                 elif prompt_text.split(' ')[0] == '/save':
                     if len(prompt_text.split(' ')) == 1:
                         world.save()
-                    elif len(prompt_text.split(' ')) == 2:
-                        world.save(prompt_text.split(' ')[1] + '.json')
-                elif prompt_text.split(' ')[0] == '/tp':
-                    if len(prompt_text.split(' ')) == 2:
-                        px = float(prompt_text.split(' ')[1])
-                        py = 39 - world.gen.gen(int(px))
-                elif prompt_text.split(' ')[0] == '/set':
-                    if len(prompt_text.split(' ')) == 4:
-                        world.set(int(prompt_text.split(' ')[1]), int(prompt_text.split(' ')[2]),
-                                  block.block(prompt_text.split(' ')[3], blocks))
+                elif len(prompt_text.split(' ')) == 2:
+                    world.save(prompt_text.split(' ')[1] + '.json')
+
+                if creative:  # debug and cheats
+                    if prompt_text.split(' ')[0] == '/kill':
+                        die()
+                    elif prompt_text.split(' ')[0] == '/give':
+                        if len(prompt_text.split(' ')) == 3:
+                            if prompt_text.split(' ')[1] in blocks:
+                                pi[prompt_text.split(' ')[1]] += int(prompt_text.split(' ')[2])
+                    elif prompt_text.split(' ')[0] == '/tp':
+                        if len(prompt_text.split(' ')) == 2:
+                            px = float(prompt_text.split(' ')[1])
+                            py = 39 - world.gen.gen(int(px))
+                    elif prompt_text.split(' ')[0] == '/set':
+                        if len(prompt_text.split(' ')) == 4:
+                            world.set(int(prompt_text.split(' ')[1]), int(prompt_text.split(' ')[2]),
+                                      block.block(prompt_text.split(' ')[3], blocks))
 
                 prompt_text = ''
                 debug['prompt'] = False
