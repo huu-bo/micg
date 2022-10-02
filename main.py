@@ -6,7 +6,7 @@ import math
 pygame.init()
 
 # hold control for debug menu
-VERSION = 'Alpha 5'
+VERSION = 'Alpha 6'
 size = 20
 
 gen = noise.generator(10)
@@ -116,22 +116,23 @@ while run:
         debug['prompt'] = True
         prompt_text += '/'
 
-    if mouse_press[2]:
-        if world.get(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20).solid:
-            pi[world.get(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20).name] += 1
+    if mouse_pos[1] < size * 40:
+        if mouse_press[2]:
+            if world.get(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20).solid:
+                pi[world.get(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20).name] += 1
 
-        b = block.block('air', blocks)
-        world.set(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20, b)
-        world.to_update.append(b)
-    if not world.get(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20).solid:
-        if mouse_press[0]:
-            if pi[ps] > 0:
-                b = block.block(ps, blocks)
-                world.set(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20, b)
-                world.to_update.append(b)
+            b = block.block('air', blocks)
+            world.set(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20, b)
+            world.to_update.append(b)
+        if not world.get(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20).solid:
+            if mouse_press[0]:
+                if pi[ps] > 0:
+                    b = block.block(ps, blocks)
+                    world.set(math.floor(mouse_pos[0] / size + px), math.floor(mouse_pos[1] / size + py) - 20, b)
+                    world.to_update.append(b)
 
-                if mouse_pos[1] < size * 40:
-                    pi[ps] -= 1
+                    if mouse_pos[1] < size * 40:
+                        pi[ps] -= 1
 
     # player physics
     px += pxv
