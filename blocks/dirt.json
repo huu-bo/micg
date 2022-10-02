@@ -2,5 +2,7 @@
   "solid": true,
   "render": true,
   "max support": -1,
-  "color": [118, 85, 43]
+  "color": [118, 85, 43],
+
+  "craft": {"grass": 1}
 }

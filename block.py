@@ -149,3 +149,20 @@ class block:
                     self]
         else:
             return []
+
+
+def craft(pi, b, f, blocks, amount=1):
+    if b in blocks:
+        if 'craft' in blocks[b]:
+            if f in blocks[b]['craft']:
+                if pi[f] >= amount * blocks[b]['craft'][f]:
+                    pi[f] -= amount * blocks[b]['craft'][f]
+                    pi[b] += amount
+                else:
+                    print('not enough', f, 'amount:', pi[f])
+            else:
+                print('cannot craft', b, 'from', f)
+        else:
+            print(b, 'not craftable')
+    else:
+        print(b, 'does not exist')
