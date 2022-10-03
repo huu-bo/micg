@@ -8,7 +8,7 @@ pygame.init()
 # hold control for debug menu
 VERSION = 'Alpha 6'
 size = 20
-creative = False
+creative = True
 
 gen = noise.generator(10)
 world = noise.world(gen)
@@ -45,8 +45,6 @@ def die():
 
     px = 0
     py = 0
-    pxv = 0
-    pyv = 0
 
     for b in blocks:
         if blocks[b]['solid']:
@@ -86,8 +84,8 @@ while run:
                 elif prompt_text.split(' ')[0] == '/save':
                     if len(prompt_text.split(' ')) == 1:
                         world.save()
-                elif len(prompt_text.split(' ')) == 2:
-                    world.save(prompt_text.split(' ')[1] + '.json')
+                    elif len(prompt_text.split(' ')) == 2:
+                        world.save(prompt_text.split(' ')[1] + '.json')
                 # crafting
                 elif prompt_text.split(' ')[0] == '/craft':
                     print('craft')
