@@ -107,7 +107,7 @@ while run:
                     elif prompt_text.split(' ')[0] == '/tp':
                         if len(prompt_text.split(' ')) == 2:
                             px = float(prompt_text.split(' ')[1])
-                            py = 39 - world.gen.gen(int(px))
+                            py = 39 - world.gen.gen(int(px)) - 40
                     elif prompt_text.split(' ')[0] == '/set':
                         if len(prompt_text.split(' ')) == 4:
                             world.set(int(prompt_text.split(' ')[1]), int(prompt_text.split(' ')[2]),
