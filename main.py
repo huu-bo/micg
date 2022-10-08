@@ -38,6 +38,8 @@ debug = {
 }
 prompt_text = ''
 
+crafting = False
+
 
 def die():
     global px, py, pxv, pyv
@@ -217,33 +219,75 @@ while run:
 
     # inventory ui, will not be drawn if debug menu or chat is active
     if not kmod & pygame.KMOD_LCTRL and not debug['prompt']:
-        i = 0
-        for b in pi:
-            if b in blocks:
-                if 'color' in blocks[b]:
-                    c = blocks[b]['color']
+        if not crafting:
+            i = 0
+            for b in pi:
+                if b in blocks:
+                    if 'color' in blocks[b]:
+                        c = blocks[b]['color']
+                    else:
+                        c = (0, 255, 0)
                 else:
-                    c = (0, 255, 0)
-            else:
-                c = (255, 10, 10)
+                    c = (255, 10, 10)
 
-            pygame.draw.rect(screen, c, (i * size, size * 40, size, size))
-            screen.blit(font.render(str(pi[b]), True, (255, 255, 255)), (i * size, size * 41))
+                pygame.draw.rect(screen, c, (i * size, size * 40, size, size))
+                screen.blit(font.render(str(pi[b]), True, (255, 255, 255)), (i * size, size * 41))
 
-            if ps == b:
-                pygame.draw.rect(screen, ((255 - c[0]) % 255, (255 - c[1]) % 255, (255 - c[2]) % 255),
-                                 (i * size, size * 40, size, size), 1)
+                if ps == b:
+                    pygame.draw.rect(screen, ((255 - c[0]) % 255, (255 - c[1]) % 255, (255 - c[2]) % 255),
+                                     (i * size, size * 40, size, size), 1)
 
+                if size * 40 < mouse_pos[1] < size * 41:
+                    if i * size < mouse_pos[0] < (i + 1) * size:
+                        pygame.draw.rect(screen, ((255 - c[0]) % 255, (255 - c[1]) % 255, (255 - c[2]) % 255), (i * size, size * 40, size, size), 2)
+
+                        if mouse_press[0]:
+                            ps = b
+
+                            pygame.draw.rect(screen, (255, 255, 255), (i * size, size * 40, size, size), 3)
+
+                i += 1
+            pygame.draw.rect(screen, (255, 255, 255), (i * size, size * 40, size, size))
             if size * 40 < mouse_pos[1] < size * 41:
                 if i * size < mouse_pos[0] < (i + 1) * size:
-                    pygame.draw.rect(screen, ((255 - c[0]) % 255, (255 - c[1]) % 255, (255 - c[2]) % 255), (i * size, size * 40, size, size), 2)
+                    pygame.draw.rect(screen, (0, 0, 0), (i * size, size * 40, size, size), 2)
 
                     if mouse_press[0]:
-                        ps = b
+                        crafting = True
 
-                        pygame.draw.rect(screen, (255, 255, 255), (i * size, size * 40, size, size), 3)
+                        pygame.draw.rect(screen, (0, 0, 0), (i * size, size * 40, size, size), 3)
+        else:
+            i = 0
+            for b in pi:
+                if b in blocks:
+                    bc = block.color(b, blocks)
+                    r = block.recipies(b, blocks)
+                    if r:
+                        for f in r:
+                            c = block.color(f, blocks)
 
-            i += 1
+                            pygame.draw.rect(screen, c, (i * size, size * 40, size, size))  # craft this block
+                            pygame.draw.rect(screen, bc, (i * size, size * 41, size, size))  # from this block
+
+                            if size * 40 < mouse_pos[1] < size * 42:
+                                if i * size < mouse_pos[0] < (i + 1) * size:
+                                    pygame.draw.rect(screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 2)
+
+                                    if kmod & pygame.KMOD_SHIFT and mouse_press[0]:
+                                        block.craft(pi, b, f, blocks)
+                                        pygame.draw.rect(screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
+                                    elif mouse_click[0]:
+                                        block.craft(pi, b, f, blocks)
+                                        pygame.draw.rect(screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
+
+                                        crafting = False
+                                    elif mouse_click[2]:
+                                        block.craft(pi, b, f, blocks, amount=5)
+                                        pygame.draw.rect(screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
+
+                                        crafting = False
+
+                            i += 1
 
     world.update(fast=debug['fast_physics'])
 

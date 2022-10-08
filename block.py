@@ -164,3 +164,24 @@ def craft(pi, b, f, blocks, amount=1):
             print(b, 'not craftable')
     else:
         print(b, 'does not exist')
+
+
+def recipies(b, blocks):
+    if b in blocks:
+        if 'craft' in blocks[b]:
+            return blocks[b]['craft']
+        else:
+            return False
+    else:
+        return False
+
+
+def color(b, blocks):
+    if b in blocks:
+        if 'color' in blocks[b]:
+            c = blocks[b]['color']
+        else:
+            c = (0, 255, 0)
+    else:
+        c = (255, 10, 10)
+    return c
