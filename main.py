@@ -88,14 +88,13 @@ while run:
                         world.save(prompt_text.split(' ')[1] + '.json')
                 # crafting
                 elif prompt_text.split(' ')[0] == '/craft':
-                    print('craft')
                     if len(prompt_text.split(' ')) == 3:
                         block.craft(pi, prompt_text.split(' ')[1], prompt_text.split(' ')[2], blocks)
                     elif len(prompt_text.split(' ')) == 4:
                         block.craft(pi, prompt_text.split(' ')[1], prompt_text.split(' ')[2], blocks,
                                     amount=int(prompt_text.split(' ')[3]))
                     else:
-                        print('aaaa')
+                        print('incorrect amount of options')
 
                 if creative:  # debug and cheats
                     if prompt_text.split(' ')[0] == '/kill':
