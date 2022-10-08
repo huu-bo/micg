@@ -193,8 +193,8 @@ while run:
     if py > 60:
         die()
 
-    for y in range(min(800 // size, 40)):
-        for x in range(min(800 // size, 40)):
+    for y in range(41):
+        for x in range(41):
             b = world.get(x + math.floor(px), y + math.floor(py) - 20)
             if b is not None:
                 if b.render:
@@ -218,6 +218,7 @@ while run:
         screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (10, 10 + 75 * debug['player_info']))
 
     # inventory ui, will not be drawn if debug menu or chat is active
+    pygame.draw.rect(screen, (0, 0, 0), (0, size * 40, size * 40, size * 2))
     if not kmod & pygame.KMOD_LCTRL and not debug['prompt']:
         if not crafting:
             i = 0
