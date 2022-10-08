@@ -222,13 +222,7 @@ while run:
         if not crafting:
             i = 0
             for b in pi:
-                if b in blocks:
-                    if 'color' in blocks[b]:
-                        c = blocks[b]['color']
-                    else:
-                        c = (0, 255, 0)
-                else:
-                    c = (255, 10, 10)
+                c = block.color(b, blocks)
 
                 pygame.draw.rect(screen, c, (i * size, size * 40, size, size))
                 screen.blit(font.render(str(pi[b]), True, (255, 255, 255)), (i * size, size * 41))
