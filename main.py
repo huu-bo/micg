@@ -8,7 +8,7 @@ pygame.init()
 # hold control for debug menu
 VERSION = 'Alpha 6'
 size = 20
-creative = True
+creative = False
 
 gen = noise.generator(10)
 world = noise.world(gen)
@@ -218,7 +218,7 @@ while run:
         screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (10, 10 + 75 * debug['player_info']))
 
     # inventory ui, will not be drawn if debug menu or chat is active
-    pygame.draw.rect(screen, (0, 0, 0), (0, size * 40, size * 40, size * 2))
+    pygame.draw.rect(screen, (0, 0, 0), (0, size * 40, size * 40, size * 2))  # black background
     if not kmod & pygame.KMOD_LCTRL and not debug['prompt']:
         if not crafting:
             i = 0
