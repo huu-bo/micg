@@ -9,6 +9,7 @@ pygame.init()
 VERSION = 'Alpha 6'
 size = 20
 creative = False
+username = 'test1'
 
 gen = noise.generator(10)
 world = noise.world(gen)
@@ -37,6 +38,11 @@ debug = {
     'prompt': False  # cannot start out True
 }
 prompt_text = ''
+prompt_history = []
+
+online = False
+server = False
+ip = None  # server ip
 
 crafting = False
 
@@ -76,43 +82,56 @@ while run:
                 prompt_text = ''
             elif event.key != pygame.K_RETURN:
                 prompt_text += event.unicode
+            elif prompt_text[0] != '/':
+                prompt_history.insert(0, username + ': ' + prompt_text)
+                prompt_text = ''
+                debug['prompt'] = False
             else:
+                c = prompt_text.split(' ')
                 # saving and loading
-                if prompt_text.split(' ')[0] == '/load':
-                    if len(prompt_text.split(' ')) == 1:
+                if c[0] == '/load':
+                    if len(c) == 1:
                         world.load()
-                    elif len(prompt_text.split(' ')) == 2:
-                        world.load(prompt_text.split(' ')[1] + '.json')
-                elif prompt_text.split(' ')[0] == '/save':
-                    if len(prompt_text.split(' ')) == 1:
+                    elif len(c) == 2:
+                        world.load(c[1] + '.json')
+                elif c[0] == '/save':
+                    if len(c) == 1:
                         world.save()
-                    elif len(prompt_text.split(' ')) == 2:
-                        world.save(prompt_text.split(' ')[1] + '.json')
+                    elif len(c) == 2:
+                        world.save(c[1] + '.json')
                 # crafting
-                elif prompt_text.split(' ')[0] == '/craft':
-                    if len(prompt_text.split(' ')) == 3:
-                        block.craft(pi, prompt_text.split(' ')[1], prompt_text.split(' ')[2], blocks)
-                    elif len(prompt_text.split(' ')) == 4:
-                        block.craft(pi, prompt_text.split(' ')[1], prompt_text.split(' ')[2], blocks,
-                                    amount=int(prompt_text.split(' ')[3]))
+                elif c[0] == '/craft':
+                    if len(c) == 3:
+                        block.craft(pi, c[1], c[2], blocks)
+                    elif len(c) == 4:
+                        block.craft(pi, c[1], c[2], blocks, amount=int(c[3]))
                     else:
                         print('incorrect amount of options')
+                # multiplayer
+                elif c[0] == '/join':
+                    online = True
+                    server = False
+                    ip = c[1]
+                elif c[0] == '/host':
+                    online = True
+                    server = True
+                    ip = c[1]
 
                 if creative:  # debug and cheats
-                    if prompt_text.split(' ')[0] == '/kill':
+                    if c[0] == '/kill':
                         die()
-                    elif prompt_text.split(' ')[0] == '/give':
-                        if len(prompt_text.split(' ')) == 3:
-                            if prompt_text.split(' ')[1] in blocks:
-                                pi[prompt_text.split(' ')[1]] += int(prompt_text.split(' ')[2])
-                    elif prompt_text.split(' ')[0] == '/tp':
-                        if len(prompt_text.split(' ')) == 2:
-                            px = float(prompt_text.split(' ')[1])
+                    elif c[0] == '/give':
+                        if len(c) == 3:
+                            if c[1] in blocks:
+                                pi[c[1]] += int(c[2])
+                    elif c[0] == '/tp':
+                        if len(c) == 2:
+                            px = float(c[1])
                             py = 39 - world.gen.gen(int(px)) - 40
-                    elif prompt_text.split(' ')[0] == '/set':
-                        if len(prompt_text.split(' ')) == 4:
-                            world.set(int(prompt_text.split(' ')[1]), int(prompt_text.split(' ')[2]),
-                                      block.block(prompt_text.split(' ')[3], blocks))
+                    elif c[0] == '/set':
+                        if len(c) == 4:
+                            world.set(int(c[1]), int(c[2]),
+                                      block.block(c[3], blocks))
 
                 prompt_text = ''
                 debug['prompt'] = False
@@ -297,6 +316,11 @@ while run:
         else:
             text = str(prompt_text) + '_'
         screen.blit(font.render(text, True, (255, 255, 255), (0, 0, 0)), (10, size * 40))
+
+        y = size * 39
+        for text in prompt_history:
+            screen.blit(font.render(text, True, (255, 255, 255), (0, 0, 0)), (10, y))
+            y -= size
 
     if kmod & pygame.KMOD_LCTRL:  # debug menu
         i = 0
