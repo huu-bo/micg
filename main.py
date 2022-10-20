@@ -3,11 +3,12 @@ import pygame
 import block
 import noise
 import math
+import net
 pygame.init()
 
 # hold control for debug menu
 VERSION = 'Alpha 6'
-size = 20
+size = 10
 creative = False
 username = 'test1'
 
@@ -42,7 +43,7 @@ prompt_history = []
 
 online = False
 server = False
-ip = None  # server ip
+connection = None
 
 crafting = False
 
@@ -111,11 +112,25 @@ while run:
                 elif c[0] == '/join':
                     online = True
                     server = False
-                    ip = c[1]
+
+                    if connection is not None:
+                        connection.exit()
+
+                    if len(c) == 2:
+                        connection = net.client(ip=c[1])
+                    else:
+                        connection = net.client()
                 elif c[0] == '/host':
                     online = True
                     server = True
-                    ip = c[1]
+
+                    if connection is not None:
+                        connection.exit()
+
+                    if len(c) == 2:
+                        connection = net.server(ip=c[1])
+                    else:
+                        connection = net.server()
 
                 if creative:  # debug and cheats
                     if c[0] == '/kill':
@@ -143,14 +158,18 @@ while run:
     mouse_press = pygame.mouse.get_pressed(5)
     mouse_click = [mouse_press[i] and not pre_mouse_press[i] for i in range(5)]
     pre_mouse_press = mouse_press
-    if key[pygame.K_d] or key[pygame.K_RIGHT]:
-        pxv += .1
-    if key[pygame.K_a] or key[pygame.K_LEFT]:
-        pxv -= .1
 
-    if key[pygame.K_w] or key[pygame.K_UP]:
-        if pf:
-            pyv = -.55
+    if server or not online or True:
+        if key[pygame.K_d] or key[pygame.K_RIGHT]:
+            pxv += .1
+        if key[pygame.K_a] or key[pygame.K_LEFT]:
+            pxv -= .1
+
+        if key[pygame.K_w] or key[pygame.K_UP]:
+            if pf:
+                pyv = -.55
+    elif server and online:
+        pass
 
     if key[pygame.K_t]:
         debug['prompt'] = True
@@ -209,6 +228,11 @@ while run:
     if hit:
         py -= .01
 
+    if online and not server:
+        connection.update(key, world)
+    elif online and server:
+        connection.update(world)
+
     if py > 60:
         die()
 
@@ -232,6 +256,12 @@ while run:
 
     # draw player
     pygame.draw.rect(screen, (255, 255, 0), (screen.get_size()[0] // 2, screen.get_size()[1] // 2 - size, size, size))
+
+    # draw online players
+    if online and server:
+        for p in connection.players:
+            # pygame.draw.rect(screen, (255, 0, 0), ((p.x - px) * size, (p.y - py) * size, size, size))
+            pygame.draw.rect(screen, (255, 0, 0), (round(p.x * size), p.y * size, size, size))
 
     if len(world.to_update) > 100 or debug['to_update']:
         screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (10, 10 + 75 * debug['player_info']))
@@ -348,3 +378,5 @@ while run:
 
 pygame.quit()
 world.save()
+if connection is not None:
+    connection.exit()
