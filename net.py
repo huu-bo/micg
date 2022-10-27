@@ -13,6 +13,9 @@ import time
 # IN:
 # name
 
+# IB:
+# x y type
+
 # AK:
 # wasd changed
 # 0000 binary for wasd
@@ -66,6 +69,7 @@ class server:
 
         self.ip = ip
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.settimeout(.5)
         self.server.bind((ip, 60000))
         self.server.listen()
 
@@ -75,12 +79,15 @@ class server:
 
     def _accept(self):
         while self.run:
-            c, address = self.server.accept()
-            print('accepted', c, address)
-            p = player()
-            self.players.append(p)
-            self.threads.append(threading.Thread(target=server_client, args=[c, self, p]))
-            self.threads[-1].start()
+            try:
+                c, address = self.server.accept()
+                print('accepted', c, address)
+                p = player()
+                self.players.append(p)
+                self.threads.append(threading.Thread(target=server_client, args=[c, self, p]))
+                self.threads[-1].start()
+            except socket.timeout:
+                pass
 
     def update(self, world):
         for p in self.players:
@@ -106,15 +113,20 @@ class server_client:
         self.name = 'error0'
         self.player = p
 
+        self.c.settimeout(.02)
         self.run()
 
     def packet_recv(self, packet):
         data = packet.decode('utf-8')
-        print('client:' + self.name + ' packet:', data)
+        print("client: '" + self.name + "' packet: '" + data + "'")
         if data[0] == 'I':
             if data[1] == 'N':
-                if ' ' not in data[1:]:
-                    self.name = data[1:]
+                if ' ' not in data[2:]:
+                    self.name = data[2:]
+                else:
+                    print('incorrect name', data[2:])
+                    if self.r:
+                        self.c.send('EN')
                 print(self.name, 'joined')
             else:
                 print('unknown info packet:', data)
@@ -131,12 +143,23 @@ class server_client:
 
     def run(self):
         while self.r:
-            print('waiting for packet:', self.name)
-            self.packet_recv(self.c.recv(1024))
+            # print('waiting for packet:', self.name)
+            try:
+                self.packet_recv(self.c.recv(1024))
+            except socket.timeout:
+                pass
+
+            if self.r:
+                if self.player.xv != 0 or self.player.yv != 0:
+                    packet = 'AM' + str(self.player.x) + ' ' + str(self.player.y)
+                    print(packet)
+                    packet = packet.encode('utf-8')
+                    self.c.send(packet)
 
     def close(self):
         self.c.close()
         self.s.remove(self)
+        self.r = False
 
 
 class client:
@@ -144,13 +167,21 @@ class client:
         self.ip = ip
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+        self.name = 'test'
+
         self.connected = False
 
         self.last_move = 'AK0000'
 
+        self.x = 0
+        self.y = 0
+
         self.connect_thread = threading.Thread(target=self._connect)
-        print('started connect thread')
         self.connect_thread.start()
+        # print(self.name, 'started connect thread')
+
+        self.recv_thread = threading.Thread(target=self.recv)
+        self.recv_thread.start()
 
     def update(self, key, world):
         out = ['A', 'K']
@@ -178,20 +209,49 @@ class client:
                 if self.connect_thread.is_alive():
                     self.connected = False
                 else:
-                    self.server.send('INtest')
+                    self.server.send('IN' + 'timeout')
 
         if self.connected and out != self.last_move:
             self.server.send(out.encode('utf-8'))
             print('packet:', out)
             self.last_move = out
 
+        return self.x, self.y
+
     def _connect(self):
         self.server.connect((self.ip, 60000))
         print('connected')
         self.connected = True
+        self.server.send(('IN' + self.name).encode('utf-8'))
+
+    def recv(self):
+        while not self.connected:
+            print('waiting to connect')
+            time.sleep(1)
+        while self.connected:
+            data = self.server.recv(1024).decode('utf-8')
+            if data:
+                if data[0] == 'A':
+                    if data[1] == 'M':
+                        split = data[2:].split(' ')
+                        if len(split) == 2:
+                            x = self.x
+                            y = self.y
+                            try:
+                                self.x = float(split[0])
+                                self.y = float(split[1])
+                            except ValueError as error:
+                                print(error)
+                                self.x = x  # reset position to before packet to not only update x in error
+                                self.y = y
+                    else:
+                        print('incorrect action packet:', data)
+                else:
+                    print('incorrect packet type:', data)
 
     def exit(self):
         self.server.send('AQ'.encode('utf-8'))
+        self.connected = False
 
         print('connecting connect_thread')
         self.connect_thread.join(1)
@@ -199,4 +259,9 @@ class client:
             print('connect_thread is still alive')
         else:
             print('connect_tread joined')
+
+        self.recv_thread.join(1)
+        if self.recv_thread.is_alive():
+            print('recv_thread lives on')
+
         self.server.close()

@@ -229,7 +229,7 @@ while run:
         py -= .01
 
     if online and not server:
-        connection.update(key, world)
+        px, py = connection.update(key, world)
     elif online and server:
         connection.update(world)
 
@@ -261,7 +261,8 @@ while run:
     if online and server:
         for p in connection.players:
             # pygame.draw.rect(screen, (255, 0, 0), ((p.x - px) * size, (p.y - py) * size, size, size))
-            pygame.draw.rect(screen, (255, 0, 0), (round(p.x * size), p.y * size, size, size))
+            # pygame.draw.rect(screen, (255, 0, 0), (round(p.x * size), p.y * size, size, size))
+            pygame.draw.rect(screen, (255, 0, 0), (round((p.x - px) * size), round((p.y - py + 20) * size), size, size))
 
     if len(world.to_update) > 100 or debug['to_update']:
         screen.blit(font.render('processing ' + str(len(world.to_update)), True, (255, 255, 255)), (10, 10 + 75 * debug['player_info']))
