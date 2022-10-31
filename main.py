@@ -9,7 +9,7 @@ pygame.init()
 # hold control for debug menu
 VERSION = 'Alpha 6'
 size = 10
-creative = False
+creative = True
 username = 'test1'
 
 gen = noise.generator(10)
@@ -27,7 +27,7 @@ ps = 'grass'  # player block selection
 pi = {}  # player inventory
 for b in blocks:
     if blocks[b]['solid']:
-        pi[b] = 99 * creative
+        pi[b] = 0 * creative
 
 debug = {
     'chunk_border': False,
@@ -120,6 +120,8 @@ while run:
                         connection = net.client(ip=c[1])
                     else:
                         connection = net.client()
+
+                    world = noise.world(noise.generator(0), gen_new=False, server=connection)
                 elif c[0] == '/host':
                     online = True
                     server = True
@@ -128,9 +130,9 @@ while run:
                         connection.exit()
 
                     if len(c) == 2:
-                        connection = net.server(ip=c[1])
+                        connection = net.server(world, ip=c[1])
                     else:
-                        connection = net.server()
+                        connection = net.server(world)
 
                 if creative:  # debug and cheats
                     if c[0] == '/kill':

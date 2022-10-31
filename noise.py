@@ -89,9 +89,12 @@ class generator:
 
 
 class world:
-    def __init__(self, gen: generator):
+    def __init__(self, gen: generator, gen_new=True, server=None):
         self.gen = gen
         self.world = {}
+
+        self.gen_new = gen_new
+        self.server = server
 
         self.blocks = block.load()
 
@@ -159,7 +162,15 @@ class world:
         if (x // 40, y // 40) in self.world:
             return self.world[(x // 40, y // 40)][y % 40][x % 40]
         else:
-            self.gen_chunk(x // 40, y // 40)
+            if self.gen_new:
+                self.gen_chunk(x // 40, y // 40)
+            else:
+                if self.server is not None:
+                    name = self.server.get(x, y)
+                    b = block.block(name, self.blocks)
+                    self.set(x, y, b)
+                else:
+                    raise ValueError('if world.gen_new == False, you should give net.client')
             return self.get(x, y)
 
     def set(self, x, y, value: block.block):
@@ -167,13 +178,23 @@ class world:
         value.y = y
 
         if y < 40:
-            self.to_append += [self.get(value.x - 1, value.y), self.get(value.x, value.y - 1),
-                               self.get(value.x + 1, value.y), self.get(value.x, value.y + 1), value]
+            if self.server is None:
+                self.to_append += [self.get(value.x - 1, value.y), self.get(value.x, value.y - 1),
+                                   self.get(value.x + 1, value.y), self.get(value.x, value.y + 1), value]
 
-            if x // 40 in self.world:
+            if (x // 40, y // 40) in self.world:
                 self.world[x // 40][y][x % 40] = value
             else:
-                self.get(x, y)  # load the chunk
+                if self.gen_new:
+                    self.get(x, y)  # load the chunk
+                else:
+                    c = []
+                    for i in range(40):
+                        row = []
+                        for j in range(40):
+                            row.append(block.block('air', self.blocks))
+                        c.append(row)
+                    self.world[(x // 40, y // 40)] = c
                 self.world[(x // 40, y // 40)][y % 40][x % 40] = value
 
     def update(self, fast=False):
