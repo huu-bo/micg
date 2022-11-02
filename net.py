@@ -250,19 +250,19 @@ class client:
 
     def update(self, key, world):
         out = ['A', 'K']
-        if key[pygame.K_w]:
+        if key[pygame.K_w] or key[pygame.K_UP]:
             out.append('1')
         else:
             out.append('0')
-        if key[pygame.K_a]:
+        if key[pygame.K_a] or key[pygame.K_LEFT]:
             out.append('1')
         else:
             out.append('0')
-        if key[pygame.K_s]:
+        if key[pygame.K_s] or key[pygame.K_DOWN]:
             out.append('1')
         else:
             out.append('0')
-        if key[pygame.K_d]:
+        if key[pygame.K_d] or key[pygame.K_RIGHT]:
             out.append('1')
         else:
             out.append('0')
