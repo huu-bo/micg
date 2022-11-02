@@ -141,7 +141,7 @@ class world:
                         b = block.block('dirt', self.blocks)
 
                     else:
-                        if height - dy - 1 > 100 and random.random() > .99 - (height - dy - 101) / 50:
+                        if height - dy - 1 > 100 and random.random() > max(.5, .99 - (height - dy - 101) / 50):
                             b = block.block('diamond', self.blocks)
                         elif height - dy - 1 > 100 and random.random() > .9 - (height - dy - 101) / 50:
                             b = block.block('coal', self.blocks)
@@ -166,24 +166,27 @@ class world:
                 self.gen_chunk(x // 40, y // 40)
             else:
                 if self.server is not None:
-                    name = self.server.get(x, y)
-                    b = block.block(name, self.blocks)
-                    self.set(x, y, b)
+                    self.server.get_chunk(x // 40, y // 40)
                 else:
                     raise ValueError('if world.gen_new == False, you should give net.client')
-            return self.get(x, y)
+            if (x // 40, y // 40) in self.world:
+                return self.get(x, y)
+            else:
+                # print((x // 40, y // 40), (x, y))
+                print([c for c in self.world])
+                return block.block('air', self.blocks)
 
     def set(self, x, y, value: block.block):
         value.x = x
         value.y = y
 
         if y < 40:
-            if self.server is None:
+            if self.gen_new:
                 self.to_append += [self.get(value.x - 1, value.y), self.get(value.x, value.y - 1),
                                    self.get(value.x + 1, value.y), self.get(value.x, value.y + 1), value]
 
             if (x // 40, y // 40) in self.world:
-                self.world[x // 40][y][x % 40] = value
+                self.world[(x // 40, y // 40)][y % 40][x % 40] = value
             else:
                 if self.gen_new:
                     self.get(x, y)  # load the chunk
@@ -194,6 +197,7 @@ class world:
                         for j in range(40):
                             row.append(block.block('air', self.blocks))
                         c.append(row)
+                    print('filled chunk:', (x // 40, y // 40))
                     self.world[(x // 40, y // 40)] = c
                 self.world[(x // 40, y // 40)][y % 40][x % 40] = value
 
@@ -294,3 +298,39 @@ class world:
                         self.gen.load(raw[i]['gen'])  # TODO: also load and save player position and inventory
 
                 print('loaded')
+
+    def serialize_chunk(self, x, y):
+        out = ''
+        if (x, y) not in self.world:
+            self.gen_chunk(x, y)
+        chunk = self.world[(x, y)]
+        for row in chunk:
+            for b in row:
+                out += b.name + ','
+        return out
+
+    def deserialise_chunk(self, data: str):
+        chunk = []
+        split = data.split(' ')
+        if len(split) != 3:
+            raise Exception('chunk incorrectly formatted')
+        x = 0
+        y = 0
+        row = []
+        for b in split[2].split(','):
+            b = block.block(b, self.blocks)
+            b.x = x
+            b.y = y
+            row.append(b)
+            x += 1
+
+            if x == 40:
+                chunk.append(row)
+                row = []
+                x = 0
+                y += 1
+
+        print('deserialised chunk', (int(split[0]), int(split[1])), 'size:', len(chunk[0]), len(chunk))
+        self.world[(int(split[0]), int(split[1]))] = chunk
+        print(self.world[(int(split[0]), int(split[1]))][39][20].name)
+        print([c for c in self.world])

@@ -184,6 +184,12 @@ class server_client:
                         raise ValueError(data)
                 else:
                     raise Exception('server_client.world is None')
+            elif data[1] == 'C':
+                split = data[2:].split(' ')
+                if len(split) == 2:
+                    c = self.world.serialize_chunk(int(split[0]), int(split[1]))
+                    print('IC' + split[0] + ' ' + split[1] + ' ' + c[:50])
+                    self.net.send('IC' + split[0] + ' ' + split[1] + ' ' + c)
             else:
                 print('unknown info packet:', data)
         elif data[0] == 'A':
@@ -218,10 +224,13 @@ class server_client:
 
 
 class client:
-    def __init__(self, ip='localhost'):
+    def __init__(self, world, ip='localhost'):
         self.ip = ip
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.net = net(self.server)
+
+        self.world = world
+        self.chunk_requests = {}  # chunks for which requests have been sent to the server
 
         self.name = 'test'
 
@@ -304,27 +313,35 @@ class client:
                             self.y = y
                 else:
                     print('incorrect action packet:', data)
+
+            elif data[0] == 'I':
+                if data[1] == 'C':
+                    split = data[2:].split(' ')
+                    self.world.deserialise_chunk(data[2:-1])
+                    self.chunk_requests[(int(split[0]), int(split[1]))] = True
+                else:
+                    print('incorrect information packet type:', data)
+
             else:
                 print('incorrect packet type:', data)
 
-    def get(self, x, y):
-        packet = 'IB' + str(x) + ' ' + str(y)
-        self.net.send(packet)
-        print('waiting for info about block', (x, y))
-        while self.connected:
-            for data in self.net.recv(self.server.recv(1024)):
-                if not data:
-                    return None
-                if data[0] == 'I' and data[1] == 'B':
-                    split = data[2:].split(' ')
-                    print('info about block', (x, y), 'received:', data)
-                    if len(split) == 3:
-                        return split[2]
-                    else:
-                        print('incorrect block info packet:', data)
-                        return 'air'
-                else:
-                    self.recv_packet(data)
+    def get_chunk(self, x, y):
+        if (x, y) not in self.chunk_requests:
+            packet = 'IC' + str(x) + ' ' + str(y)
+            self.net.send(packet)
+            self.chunk_requests[(x, y)] = False
+
+            t = 0
+            while not self.chunk_requests[(x, y)]:
+                time.sleep(.1)
+                t += 1
+                if t > 1000 and not self.chunk_requests[(x, y)]:
+                    print('chunk request timeout')
+
+                    packet = 'IC' + str(x) + ' ' + str(y)
+                    self.net.send(packet)
+                    self.chunk_requests[(x, y)] = True
+                    t = 0
 
     def exit(self):
         self.net.send('AQ')

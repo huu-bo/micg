@@ -8,7 +8,7 @@ pygame.init()
 
 # hold control for debug menu
 VERSION = 'Alpha 6'
-size = 10
+size = 20
 creative = True
 username = 'test1'
 
@@ -117,11 +117,12 @@ while run:
                         connection.exit()
 
                     if len(c) == 2:
-                        connection = net.client(ip=c[1])
+                        connection = net.client(world, ip=c[1])
                     else:
-                        connection = net.client()
+                        connection = net.client(world)
 
                     world = noise.world(noise.generator(0), gen_new=False, server=connection)
+                    connection.world = world  # if we don't do this the net has a pointer to the old world
                 elif c[0] == '/host':
                     online = True
                     server = True
@@ -232,6 +233,7 @@ while run:
 
     if online and not server:
         px, py = connection.update(key, world)
+        px -= 20
     elif online and server:
         connection.update(world)
 
