@@ -12,6 +12,16 @@ size = 20
 creative = True
 username = 'test1'
 
+# todolist:
+#     multiplayer implement:
+#           inventory
+#           clients know about other clients
+#     saving:
+#           save player inventory
+#           save player position
+#     add chat
+#     add typing
+
 gen = noise.generator(10)
 world = noise.world(gen)
 blocks = world.blocks
