@@ -135,6 +135,9 @@ while run:
                     else:
                         connection = net.server(world)
 
+                    world = noise.world(noise.generator(0), gen_new=True, server=connection, serving=True)
+                    connection.world = world  # if we don't do this the net has a pointer to the old world
+
                 if creative:  # debug and cheats
                     if c[0] == '/kill':
                         die()

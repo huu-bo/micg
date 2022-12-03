@@ -89,12 +89,13 @@ class generator:
 
 
 class world:
-    def __init__(self, gen: generator, gen_new=True, server=None):
+    def __init__(self, gen: generator, gen_new=True, server=None, serving=False):
         self.gen = gen
         self.world = {}
 
         self.gen_new = gen_new
         self.server = server
+        self.serving = serving
 
         self.blocks = block.load()
 
@@ -102,6 +103,9 @@ class world:
         self.to_append = []
 
         self.filename = None
+
+        if self.serving and self.server is None:
+            assert False, 'you did it wrong'
 
     def gen_chunk(self, x, y):
         # print('chunk', x)
@@ -172,11 +176,9 @@ class world:
             if (x // 40, y // 40) in self.world:
                 return self.get(x, y)
             else:
-                # print((x // 40, y // 40), (x, y))
-                print([c for c in self.world])
                 return block.block('air', self.blocks)
 
-    def set(self, x, y, value: block.block):
+    def set(self, x, y, value: block.block, update=True):
         value.x = x
         value.y = y
 
@@ -187,19 +189,12 @@ class world:
 
             if (x // 40, y // 40) in self.world:
                 self.world[(x // 40, y // 40)][y % 40][x % 40] = value
+                if self.server is not None and self.serving and update:  # TODO: chunk updates borkken (if online ofc.)
+                    self.server.send_all('AP' + str(x) + ' ' + str(y) + ' ' + value.name)
+                elif self.server is not None and not self.serving and update:  # multiplayer client
+                    self.server.set_block(x, y, value)
             else:
-                if self.gen_new:
-                    self.get(x, y)  # load the chunk
-                else:
-                    c = []
-                    for i in range(40):
-                        row = []
-                        for j in range(40):
-                            row.append(block.block('air', self.blocks))
-                        c.append(row)
-                    print('filled chunk:', (x // 40, y // 40))
-                    self.world[(x // 40, y // 40)] = c
-                self.world[(x // 40, y // 40)][y % 40][x % 40] = value
+                self.get(x, y)  # load the chunk
 
     def update(self, fast=False):
         # print(self.to_update)
@@ -296,6 +291,7 @@ class world:
                         self.world[(int(i.split(' ')[0]), int(i.split(' ')[1]))] = c
                     else:
                         self.gen.load(raw[i]['gen'])  # TODO: also load and save player position and inventory
+                        # TODO: also load other players if multiplayer server
 
                 print('loaded')
 
