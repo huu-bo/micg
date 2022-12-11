@@ -63,6 +63,18 @@ class net:
 # x y type
 # place block, also for deleting block since you're basically placing air
 
+# AM:
+# x y
+
+# IM:
+# x y name
+# sent from server_client to client to let client know about other clients moving
+# maybe this could be used as AM
+
+# IQ: (not implemented yet)
+# name
+# let other clients know about other clients disconnecting
+
 # AQ:
 # quit
 
@@ -79,6 +91,8 @@ class player:
 
         self.queue = []  # placing/breaking blocks
         self.key = [False, False, False, False]  # up, left, down, right
+
+        self.name = None
 
     def physics(self, world):
         if self.key[3]:
@@ -155,12 +169,17 @@ class server:
         for p in self.pipes:
             p.send(data)
 
+    def send_all_except(self, data, exception):  # TODO: broken
+        for p in self.pipes:
+            if p != exception:
+                p.send(data)
+
 
 class server_client:
     def __init__(self, c: socket.socket, s: server, p: player, pi):
         self.c = c
         self.s = s
-        self.r = True
+        self.r = True  # TODO: what is 'r'
         self.name = 'NAME_NOT_SENT'
         self.player = p
         self.pipe = pi
@@ -177,12 +196,16 @@ class server_client:
         print("client: '" + self.name + "' packet: '" + data + "'")
         if data[0] == 'I':
             if data[1] == 'N':
+                had_name = self.name != 'NAME_NOT_SENT'
                 if ' ' not in data[2:]:
                     self.name = data[2:]
                 else:
                     print('incorrect name', data[2:])
                     if self.r:
                         self.net.send('EN')
+                if not had_name:
+                    # let all the other clients that are not this client know that this client exists
+                    self.s.send_all_except('IN' + self.name, self.pipe)
                 print(self.name, 'joined')
             elif data[1] == 'B':
                 split = data[2:].split(' ')
@@ -248,6 +271,9 @@ class server_client:
                     packet = 'AM' + str(self.player.x) + ' ' + str(self.player.y)
                     self.net.send(packet)
 
+                    packet = 'IM' + str(self.player.x) + ' ' + str(self.player.y) + ' ' + self.name
+                    self.s.send_all(packet)
+
     def close(self):
         self.c.close()
         self.s.remove(self)
@@ -264,6 +290,7 @@ class client:
         self.chunk_requests = {}  # chunks for which requests have been sent to the server
 
         self.name = 'test'
+        self.players = {}
 
         self.connected = False
 
@@ -357,6 +384,20 @@ class client:
                     split = data[2:].split(' ')
                     self.world.deserialise_chunk(data[2:-1])
                     self.chunk_requests[(int(split[0]), int(split[1]))] = True
+                elif data[1] == 'N':
+                    if data[2:] not in self.players:
+                        self.players[data[2:]] = player()
+                        print(f'player {data[2:]} joined')
+                    else:
+                        print(f'player {data[2:]} joined multiple times')  # TODO: let clients know about other clients disconnecting
+                elif data[1] == 'M':
+                    split = data[2:].split(' ')
+                    name = split[2]
+                    if name in self.players:
+                        self.players[name].x = float(split[0])
+                        self.players[name].y = float(split[1])
+                    else:
+                        print(f"player '{name}' moved but does not exist")
                 else:
                     print('incorrect information packet type:', data)
 

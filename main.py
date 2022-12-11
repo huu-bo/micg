@@ -21,6 +21,12 @@ username = 'test1'
 #           save player position
 #     add chat
 #     add typing
+#     client deserializes chunks in a separate thread
+#     give packets a timestamp and if packet is old recalculate for example player position,
+#       there should be a time limit to stop hackers sending ancient packets to teleport
+#     change block update algorithm to be faster
+#     maybe not use a hashmap for noise.world
+#     when client joins let them know about the other clients
 
 gen = noise.generator(10)
 world = noise.world(gen)
@@ -253,6 +259,7 @@ while run:
     if py > 60:
         die()
 
+    # world rendering
     for y in range(41):
         for x in range(41):
             b = world.get(x + math.floor(px), y + math.floor(py) - 20)
@@ -279,6 +286,10 @@ while run:
         for p in connection.players:
             # pygame.draw.rect(screen, (255, 0, 0), ((p.x - px) * size, (p.y - py) * size, size, size))
             # pygame.draw.rect(screen, (255, 0, 0), (round(p.x * size), p.y * size, size, size))
+            pygame.draw.rect(screen, (255, 0, 0), (round((p.x - px) * size), round((p.y - py + 20) * size), size, size))
+    elif online and not server:
+        for i in connection.players:
+            p = connection.players[i]
             pygame.draw.rect(screen, (255, 0, 0), (round((p.x - px) * size), round((p.y - py + 20) * size), size, size))
 
     if len(world.to_update) > 100 or debug['to_update']:
