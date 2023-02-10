@@ -145,7 +145,7 @@ class world:
                         b = block.block('dirt', self.blocks)
 
                     else:
-                        if height - dy - 1 > 100 and random.random() > max(.5, .99 - (height - dy - 101) / 50):
+                        if height - dy - 1 > 100 and random.random() > max(.99, 1 - (height - dy - 101) / 10):
                             b = block.block('diamond', self.blocks)
                         elif height - dy - 1 > 100 and random.random() > .9 - (height - dy - 101) / 50:
                             b = block.block('coal', self.blocks)

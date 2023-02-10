@@ -9,7 +9,7 @@ pygame.init()
 # hold control for debug menu
 VERSION = 'Alpha 6'
 size = 20
-creative = True
+creative = False
 username = 'test1'
 
 # todolist:
@@ -37,13 +37,13 @@ py = 0.
 pxv = 0.  # player velocity
 pyv = 0.
 
-pf = False  # player not on the ground
+pf = False  # player falling
 ps = 'grass'  # player block selection
 
 pi = {}  # player inventory
 for b in blocks:
     if blocks[b]['solid']:
-        pi[b] = 0 * creative
+        pi[b] = 0 + creative * 100
 
 debug = {
     'chunk_border': False,
@@ -169,6 +169,35 @@ while run:
                         if len(c) == 4:
                             world.set(int(c[1]), int(c[2]),
                                       block.block(c[3], blocks))
+                    elif c[0] == '/locate':
+                        m = 5000
+                        if len(c) == 3:
+                            m = 100000
+                        if len(c) == 2 or len(c) == 3:
+                            found = False
+                            i = 0
+                            while not found:
+                                value = world.gen.gen(i)
+                                if i % 100 == 0:
+                                    print(('#' * value) + (' ' * (int(c[1]) - value)) + '|')
+                                if value >= int(c[1]):
+                                    print(('#' * value) + (' ' * (int(c[1]) - value)) + '|')
+                                    found = True
+                                if i > m:
+                                    print('could not find')
+                                    break
+                                i += 1
+                            if found:
+                                px = i
+                                py = -(world.gen.gen(i))
+                        elif len(c) == 1:
+                            m = 0
+                            i = 0
+                            while i < 5000:
+                                value = world.gen.gen(i)
+                                m = max(value, m)
+                                i += 1
+                            print('max', m)
 
                 prompt_text = ''
                 debug['prompt'] = False
@@ -183,13 +212,16 @@ while run:
 
     if server or not online or True:
         if key[pygame.K_d] or key[pygame.K_RIGHT]:
-            pxv += .1
+            pxv = .1 + creative * 1
         if key[pygame.K_a] or key[pygame.K_LEFT]:
-            pxv -= .1
+            pxv = -(.1 + creative * 1)
 
         if key[pygame.K_w] or key[pygame.K_UP]:
-            if pf:
+            if pf or creative:
                 pyv = -.55
+
+        if key[pygame.K_s] and creative:
+            pyv = .55
     elif server and online:
         pass
 
@@ -219,36 +251,41 @@ while run:
 
     # player physics
     px += pxv
-    while world.get(math.ceil(px) + 20, math.floor(py) + 1).solid:
-        px -= .01
-        pxv = 0
-    while world.get(math.floor(px) + 20, math.floor(py) + 1).solid:
-        px += .01
-        pxv = 0
-    pxv /= 2
+    py += pyv
 
-    pf = False
-    pyv += .1
+    pxv /= 1.1
+    pyv /= 1.1
+    if not creative:
+        while world.get(math.ceil(px) + 20, math.floor(py) + 1).solid:
+            px -= .01
+            pxv = 0
+        while world.get(math.floor(px) + 20, math.floor(py) + 1).solid:
+            px += .01
+            pxv = 0
+        pxv /= 2
 
-    for i in range(10):
-        py += pyv / 10
+        pf = False
+        pyv += .1
 
-        if world.get(math.floor(px) + 20, math.floor(py) + 1).solid or world.get(math.ceil(px) + 20, math.floor(py) + 1).solid:
+        for i in range(10):
+            py += pyv / 10
+
+            if world.get(math.floor(px) + 20, math.floor(py) + 1).solid or world.get(math.ceil(px) + 20, math.floor(py) + 1).solid:
+                pyv = 0
+                break
+
+        while world.get(math.floor(px) + 20, math.floor(py) + 1).solid or world.get(math.ceil(px) + 20, math.floor(py) + 1).solid:
             pyv = 0
-            break
+            py -= .01
+            pf = True
 
-    while world.get(math.floor(px) + 20, math.floor(py) + 1).solid or world.get(math.ceil(px) + 20, math.floor(py) + 1).solid:
-        pyv = 0
-        py -= .01
-        pf = True
-
-    hit = False
-    while world.get(math.floor(px) + 20, math.floor(py) - 0).solid or world.get(math.ceil(px) + 20, math.floor(py)).solid:
-        pyv = 0
-        py += .01
-        hit = True
-    if hit:
-        py -= .01
+        hit = False
+        while world.get(math.floor(px) + 20, math.floor(py) - 0).solid or world.get(math.ceil(px) + 20, math.floor(py)).solid:
+            pyv = 0
+            py += .01
+            hit = True
+        if hit:
+            py -= .01
 
     if online and not server:
         px, py = connection.update(key, world)
