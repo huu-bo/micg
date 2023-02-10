@@ -131,6 +131,23 @@ class block:
                     moved = True
 
         if moved:
+            if self.solid:
+                assert self.name != 'air', 'wtf'
+                y = self.y + 1
+                if world.get(self.x, self.y - 1).solid:
+                    self.support = world.get(self.x, self.y - 1).support + 1
+                else:
+                    print(self.x, self.y)
+                    self.support = 0
+                    print(self.support)
+                support = self.support
+                while world.get(self.x, self.y).solid and y > 1:
+                    print(y, support)
+                    support += 1
+                    world.get(self.x, y).support = support
+                    y += 1
+                    if y > 40:
+                        break
             # update neighbouring blocks
             return [world.get(self.x - 1, self.y), world.get(self.x, self.y - 1),
                     world.get(self.x + 1, self.y), world.get(self.x, self.y + 1),

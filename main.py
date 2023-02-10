@@ -9,7 +9,7 @@ pygame.init()
 # hold control for debug menu
 VERSION = 'Alpha 6'
 size = 20
-creative = False
+creative = True
 username = 'test1'
 
 # todolist:
