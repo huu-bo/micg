@@ -137,12 +137,9 @@ class block:
                 if world.get(self.x, self.y - 1).solid:
                     self.support = world.get(self.x, self.y - 1).support + 1
                 else:
-                    print(self.x, self.y)
                     self.support = 0
-                    print(self.support)
                 support = self.support
                 while world.get(self.x, self.y).solid and y > 1:
-                    print(y, support)
                     support += 1
                     world.get(self.x, y).support = support
                     y += 1
@@ -167,30 +164,30 @@ class block:
 
 
 def craft(pi, b, f, blocks, amount=1):
-    if b in blocks:
-        if 'craft' in blocks[b]:
-            if f in blocks[b]['craft']:
-                if pi[f] >= amount * blocks[b]['craft'][f]:
-                    pi[f] -= amount * blocks[b]['craft'][f]
-                    pi[b] += amount
-                else:
-                    print('not enough', f, 'amount:', pi[f])
-            else:
-                print('cannot craft', b, 'from', f)
-        else:
-            print(b, 'not craftable')
-    else:
+    if b not in blocks:
         print(b, 'does not exist')
+        return
+    if 'craft' not in blocks[b]:
+        print(b, 'not craftable')
+        return
+    if f not in blocks[b]['craft']:
+        print('cannot craft', b, 'from', f)
+        return
+    if pi[f] < amount * blocks[b]['craft'][f]:
+        print('not enough', f, 'amount:', pi[f], 'amount needed:', amount * blocks[b]['craft'][f])
+        return
+
+    pi[f] -= amount * blocks[b]['craft'][f]
+    pi[b] += amount
+    return
 
 
 def recipies(b, blocks):
-    if b in blocks:
-        if 'craft' in blocks[b]:
-            return blocks[b]['craft']
-        else:
-            return False
-    else:
+    if b not in blocks:
         return False
+    if 'craft' not in blocks[b]:
+        return False
+    return blocks[b]['craft']
 
 
 def color(b, blocks):
