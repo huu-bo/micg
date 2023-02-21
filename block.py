@@ -163,7 +163,7 @@ class block:
             return []
 
 
-def craft(pi, b, f, blocks, amount=1):
+def craft(pi, b, f, blocks, amount=1):  # TODO: make this print in-game
     if b not in blocks:
         print(b, 'does not exist')
         return

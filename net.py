@@ -98,7 +98,8 @@ class player:
             print('player online and no connection?????')
         self.server = server
 
-        self.inventory = {i: 0 for i in blocks}
+        self.inventory = {i: 0 for i in blocks if blocks[i]['solid']}
+        # TODO: property for if item should be mineable and be able to put in the inventory
 
     def physics(self, world):
         if self.key[3]:

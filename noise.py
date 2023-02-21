@@ -100,7 +100,7 @@ class world:
 
         self.blocks = block.load()
 
-        self.to_update = []
+        self.to_update = []  # TODO: make this update entire chunks instead of blocks
         self.to_append = []
 
         self.filename = None
