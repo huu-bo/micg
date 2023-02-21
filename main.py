@@ -399,7 +399,11 @@ while run:
 
                             i += 1
 
-    world.update(fast=debug['fast_physics'])
+    if server or not online:
+        world.update(fast=debug['fast_physics'])
+    else:
+        world.to_update = []
+        world.to_append = []
 
     if debug['player_info']:
         screen.blit(font.render(f'Position: {round(px, 4)} {round(py, 3)}', True, (255, 255, 255)), (10, 5))
