@@ -147,9 +147,9 @@ while run:
                         connection.exit()
 
                     if len(c) == 2:
-                        connection = net.server(world, ip=c[1])
+                        connection = net.Server(world, ip=c[1])
                     else:
-                        connection = net.server(world)
+                        connection = net.Server(world)
 
                     world = noise.world(noise.generator(0), gen_new=True, server=connection, serving=True)
                     connection.world = world  # if we don't do this the net has a pointer to the old world

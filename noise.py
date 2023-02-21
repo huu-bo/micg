@@ -11,17 +11,18 @@ class generator:
         # holes in the floor are a feature
 
         # a start to generate more world next to
-        self.generated = {
-            19: floor,
-            20: floor,
-            21: floor,
-        }
+        # self.generated = {
+        #     19: floor,
+        #     20: floor,
+        #     21: floor,
+        # }
+        self.generated = {i: floor for i in range(-10, 11)}
 
-        self.min_gen = 19
+        self.min_gen = -10
         self.min_gen_value = self.generated[self.min_gen]
         self.min_gen_slope = 0
 
-        self.max_gen = 21
+        self.max_gen = 10
         self.max_gen_value = self.generated[self.max_gen]
         self.max_gen_slope = 0
 

@@ -83,7 +83,7 @@ class net:
 
 
 class player:
-    def __init__(self):
+    def __init__(self, online, blocks, server=None):
         self.x = 0
         self.y = 0
         self.xv = 0
@@ -93,6 +93,12 @@ class player:
         self.key = [False, False, False, False]  # up, left, down, right
 
         self.name = None
+        self.selection = 'grass'
+        if online and server is None:
+            print('player online and no connection?????')
+        self.server = server
+
+        self.inventory = {i: 0 for i in blocks}
 
     def physics(self, world):
         if self.key[3]:
@@ -117,7 +123,7 @@ class player:
         self.xv /= 2
 
 
-class server:
+class Server:
     def __init__(self, world, ip='localhost'):
         self.threads = []
         self.run = True
@@ -176,7 +182,7 @@ class server:
 
 
 class server_client:
-    def __init__(self, c: socket.socket, s: server, p: player, pi):
+    def __init__(self, c: socket.socket, s: Server, p: player, pi):
         self.c = c
         self.s = s
         self.r = True  # TODO: what is 'r'
