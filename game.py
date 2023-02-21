@@ -25,6 +25,7 @@ class Game:
         self.server = False
 
         self.prompt = ''
+        self.prompt_shown = False
         self.chat_history = []  # [[10, 'Hello, World!'], [7, 'a']] list of amount of frames chat is on screen
 
         gen = noise.generator(0)
@@ -38,6 +39,14 @@ class Game:
         self.font = pygame.font.SysFont('ubuntu', int(size / 1.1))
         self.crafting = False
 
+        self.debug = {
+            'chunk_border': False,
+            'block_update': False,
+            'block_stress': False,
+            'player_info': False,
+            'to_update': False,
+        }
+
         # TODO: players
         # TODO: multiplayer
         # TODO: player inventory and block selection HUD
@@ -46,6 +55,7 @@ class Game:
         # TODO: fix player physics
         # TODO: make the player snap to coordinates if above hole and low x velocity
         # TODO: draw multiplayer players
+        # TODO: player death in void
 
     def update(self) -> bool:
         """:returns a bool which is False when the game should quit"""
@@ -93,6 +103,7 @@ class Game:
         screen = self.screen
         screen.fill((0, 0, 0))
 
+        kmod = pygame.key.get_mods()
         mouse_pos = pygame.mouse.get_pos()
         mouse_press = pygame.mouse.get_pressed(3)
         mouse_click = [mouse_press[i] and not self.pre_mouse[i] for i in range(3)]
@@ -107,18 +118,14 @@ class Game:
                                          (round((x - self.player.x % 1) * size), round((y - self.player.y % 1) * size),
                                           size, size))
                         # TODO: debug views
-                        # if debug['block_stress']:
-                        #     screen.blit(font.render(str(b.support), True, (100, 0, 0)),
-                        #                 (round((x - self.player.x % 1) * size), round((y - self.player.y % 1) * size)))
+                        if self.debug['block_stress']:
+                            screen.blit(self.font.render(str(b.support), True, (100, 0, 0)),
+                                        (round((x - self.player.x % 1) * size), round((y - self.player.y % 1) * size)))
 
-                    # if debug['block_update']:
-                    #     if b in self.world.to_update:
-                    #         pygame.draw.rect(screen, (255, 0, 0),
-                    #                          (round((x - self.player.x % 1) * size), round((y - self.player.y % 1) * size), size, size), 2)
-
-                # if debug['chunk_border']:
-                #     if y == 0 and (int(self.player.x) - x) % 40 == 0:  # draw chunk borders
-                #         pygame.draw.line(screen, (255, 0, 0), ((40 - x) * size, 0), ((40 - x) * size, 800))
+                    if self.debug['block_update']:
+                        if b in self.world.to_update or b in self.world.to_append:
+                            pygame.draw.rect(screen, (255, 0, 0),
+                                             (round((x - self.player.x % 1) * size), round((y - self.player.y % 1) * size), size, size), 2)
 
         # draw player
         pygame.draw.rect(screen, (255, 255, 0),
@@ -127,11 +134,32 @@ class Game:
         # inventory ui
         self.draw_inventory(mouse_pos, mouse_press, mouse_click)
 
+        # debug ui
+        self.draw_debug_settings(mouse_pos, mouse_click, kmod)
+
+        # draw chunk borders
+        if self.debug['chunk_border']:
+            pygame.draw.line(screen, (255, 0, 0),
+                             ((40 - self.player.x % 40) * size, 0),
+                             ((40 - self.player.x % 40) * size, 800))
+            pygame.draw.line(screen, (255, 0, 0),
+                             (0, (40 - self.player.y % 40) * size),
+                             (800, (40 - self.player.y % 40) * size))
+
+        if self.debug['player_info']:
+            screen.blit(self.font.render(f'Position: {round(self.player.x, 3)} {round(self.player.y, 3)}', True, (255, 255, 255)), (10, 5))
+            screen.blit(self.font.render(f'Motion: {round(self.player.xv, 3)} {round(self.player.yv, 3)}', True, (255, 255, 255)), (10, 25))
+            # screen.blit(self.font.render(f'onGround: {self.player}', True, (255, 255, 255)), (10, 55))
+
+        if len(self.world.to_update) > 100 or self.debug['to_update']:
+            screen.blit(self.font.render('processing ' + str(len(self.world.to_update)), True, (255, 255, 255)),
+                        (10, 10 + 75 * self.debug['player_info']))
+
         self.pre_mouse = mouse_press
 
     def draw_inventory(self, mouse_pos, mouse_press, mouse_click):
         kmod = pygame.key.get_mods()
-        if kmod & pygame.KMOD_CTRL:  # TODO debug menu
+        if kmod & pygame.KMOD_CTRL:
             return
 
         if not self.crafting:
@@ -203,9 +231,34 @@ class Game:
 
                             i += 1
 
+    def draw_debug_settings(self, mouse_pos, mouse_click, kmod):
+        if kmod & pygame.KMOD_LCTRL:
+            i = 0
+            for d in self.debug:
+                if self.debug[d]:
+                    c = (0, 255, 0)
+                else:
+                    c = (255, 0, 0)
+                if size * 40 < mouse_pos[1] < size * 41:
+                    if i * size * 6 < mouse_pos[0] < (i + 1) * size * 6:
+                        if self.debug[d]:
+                            c = (200, 255, 200)
+                        else:
+                            c = (255, 100, 100)
+                        if mouse_click[0]:
+                            c = (255, 255, 255)
+                            self.debug[d] = not self.debug[d]
+                pygame.draw.rect(self.screen, c, (i * size * 6, size * 40, size * 6, size), 2)
+
+                self.screen.blit(self.font.render(d, True, (255, 255, 255)), (i * size * 6, size * 40))
+
+                i += 1
+
 
 class GameRule:
     def __init__(self):
         self.creative = False  # allows infinite items
         self.allowFly = False  # disables movement checks
         self.keepInventory = False
+
+        self.fastPhysics = False

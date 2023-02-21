@@ -116,7 +116,7 @@ class world:
         #         if x in w:
         #             return w[x]
 
-        if x in self.world:
+        if (x, y) in self.world:
             return
 
         c = []
