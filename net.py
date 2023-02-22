@@ -107,21 +107,49 @@ class player:
         if self.key[1]:
             self.xv -= .1
 
-        self.yv += .1
-        self.y += self.yv
-
         floor = False
-        while world.get(math.floor(self.x), math.ceil(self.y)).solid or\
+        hit = False
+
+        while world.get(math.floor(self.x), math.floor(self.y) - 1).solid or \
+                world.get(math.ceil(self.x), math.floor(self.y) - 1).solid:
+            self.yv = 0
+            self.y += .01
+            floor = None
+            hit = True
+        if hit:
+            self.y -= .01
+        if floor is None:
+            return
+
+        hit = False
+        while world.get(math.floor(self.x), math.ceil(self.y)).solid or \
                 world.get(math.ceil(self.x), math.ceil(self.y)).solid:
             self.yv = 0
-            self.y -= .1
+            self.y -= .01
             floor = True
+            hit = True
+        # if hit:
+        #     self.y += .005
 
         if floor and self.key[0]:
             self.yv = -.55
 
         self.x += self.xv
+        while world.get(math.ceil(self.x), math.floor(self.y) + 1).solid:
+            self.x -= .01
+            self.xv = 0
+        while world.get(math.floor(self.x), math.floor(self.y) + 1).solid:
+            self.x += .01
+            self.xv = 0
+
+        if abs(self.xv) < .03:
+            if abs(round(self.x) - self.x) < .2:
+                self.x = round(self.x)
+
         self.xv /= 2
+
+        self.yv += .1
+        self.y += self.yv
 
 
 class Server:

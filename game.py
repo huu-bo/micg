@@ -49,11 +49,8 @@ class Game:
 
         # TODO: players
         # TODO: multiplayer
-        # TODO: player inventory and block selection HUD
         # TODO: make net.player send packets to server if online
         # TODO: chat and prompt
-        # TODO: fix player physics
-        # TODO: make the player snap to coordinates if above hole and low x velocity
         # TODO: draw multiplayer players
         # TODO: player death in void
 
@@ -92,7 +89,7 @@ class Game:
                             self.player.inventory[self.player.selection] -= 1
 
         if self.server or not self.online:
-            self.world.update(False)  # TODO: fast update
+            self.world.update(self.gameRule.fastPhysics)
         else:
             self.world.to_update = []
             self.world.to_append = []
