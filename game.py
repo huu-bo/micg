@@ -26,7 +26,7 @@ class Game:
 
         self.prompt = ''
         self.prompt_shown = False
-        self.chat_history = []  # [[10, 'Hello, World!'], [7, 'a']] list of amount of frames chat is on screen
+        self.chat_history = []
 
         gen = noise.generator(0)
         self.world = noise.world(gen)
@@ -53,19 +53,40 @@ class Game:
         # TODO: chat and prompt
         # TODO: draw multiplayer players
         # TODO: player death in void
+        # TODO: logging
+        # TODO: errors
 
     def update(self) -> bool:
         """:returns a bool which is False when the game should quit"""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
+            elif event.type == pygame.KEYDOWN:
+                if not self.prompt_shown:
+                    if event.key == pygame.K_t:
+                        self.prompt_shown = True
+                        self.prompt = ''
+                    elif event.key == pygame.K_SLASH:
+                        self.prompt_shown = True
+                        self.prompt = '/'
+                else:
+                    if event.key == pygame.K_ESCAPE:
+                        self.prompt_shown = False
+                    elif event.key == pygame.K_RETURN:
+                        self.prompt_shown = False  # TODO
+                        self.chat()
+                    else:
+                        self.prompt += event.unicode
 
         kmod = pygame.key.get_mods()
         mouse_pos = pygame.mouse.get_pos()
         mouse_press = pygame.mouse.get_pressed(5)
         keys = pygame.key.get_pressed()
 
-        self.player.key = [keys[pygame.K_w], keys[pygame.K_a], keys[pygame.K_s], keys[pygame.K_d]]
+        if not self.prompt_shown:
+            self.player.key = [keys[pygame.K_w], keys[pygame.K_a], keys[pygame.K_s], keys[pygame.K_d]]
+        else:
+            self.player.key = [False, False, False, False]
         self.player.physics(self.world)
 
         if mouse_pos[1] < size * 40:
@@ -134,6 +155,9 @@ class Game:
         # debug ui
         self.draw_debug_settings(mouse_pos, mouse_click, kmod)
 
+        # prompt
+        self.draw_chat()
+
         # draw chunk borders
         if self.debug['chunk_border']:
             pygame.draw.line(screen, (255, 0, 0),
@@ -157,6 +181,8 @@ class Game:
     def draw_inventory(self, mouse_pos, mouse_press, mouse_click):
         kmod = pygame.key.get_mods()
         if kmod & pygame.KMOD_CTRL:
+            return
+        if self.prompt_shown:
             return
 
         if not self.crafting:
@@ -229,6 +255,9 @@ class Game:
                             i += 1
 
     def draw_debug_settings(self, mouse_pos, mouse_click, kmod):
+        if self.prompt_shown:
+            return
+
         if kmod & pygame.KMOD_LCTRL:
             i = 0
             for d in self.debug:
@@ -251,6 +280,29 @@ class Game:
 
                 i += 1
 
+    def chat(self, text=None):
+        if text is None:
+            text = self.prompt
+
+        self.chat_history.append(Chat(self.prompt, 'c', self.player.name))  # TODO: commands
+
+    def draw_chat(self):
+        if self.prompt_shown:
+            if pygame.time.get_ticks() // 200 % 2 == 0:
+                cursor = '_'
+            else:
+                cursor = ''
+            self.screen.blit(self.font.render(self.prompt + cursor, True, (255, 255, 255)), (0, 800))
+
+        y = 800 - size - size * len(self.chat_history)
+        for c in self.chat_history:
+            color = 255 - c.time  # TODO: make error have red color with no fading
+            self.screen.blit(self.font.render(c.message, True, (color, color, color)), (0, y))
+            c.time += 1
+            if c.time == 255:
+                self.chat_history.remove(c)
+            y += size
+
 
 class GameRule:
     def __init__(self):
@@ -259,3 +311,12 @@ class GameRule:
         self.keepInventory = False
 
         self.fastPhysics = False
+
+
+class Chat:
+    def __init__(self, message, t, username):
+        """:argument t 'c' or 'e', 'c' for chat message, 'e' for error message"""  # TODO: python 3.9 and typing.Literal
+        self.message = message
+        self.type = t
+        self.username = username
+        self.time = 0
