@@ -9,7 +9,7 @@ pygame.init()
 # hold control for debug menu
 VERSION = 'Alpha 6'
 size = 20
-creative = True
+creative = False
 username = 'test1'
 
 # todolist:
@@ -212,16 +212,26 @@ while run:
 
     if server or not online or True:
         if key[pygame.K_d] or key[pygame.K_RIGHT]:
-            pxv = .1 + creative * 1
+            if creative:
+                pxv = 1
+            else:
+                pxv += .1
         if key[pygame.K_a] or key[pygame.K_LEFT]:
-            pxv = -(.1 + creative * 1)
+            if creative:
+                pxv = -1
+            else:
+                pxv -= .1
 
         if key[pygame.K_w] or key[pygame.K_UP]:
-            if pf or creative:
+            if creative:
                 pyv = -.55
+            else:
+                if pf:
+                    pyv -= .55
 
-        if key[pygame.K_s] and creative:
-            pyv = .55
+        if creative:
+            if key[pygame.K_s]:
+                pyv = .55
     elif server and online:
         pass
 
@@ -251,11 +261,14 @@ while run:
 
     # player physics
     px += pxv
-    py += pyv
 
-    pxv /= 1.1
-    pyv /= 1.1
-    if not creative:
+    if creative:
+        py += pyv
+
+        pxv /= 1.1
+        pyv /= 1.1
+
+    else:
         while world.get(math.ceil(px) + 20, math.floor(py) + 1).solid:
             px -= .01
             pxv = 0
