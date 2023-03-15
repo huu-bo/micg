@@ -52,7 +52,6 @@ class Game:
         # TODO: multiplayer
         # TODO: make net.player send packets to server if online (net.serverclient something does that?)
         # TODO: draw multiplayer players
-        # TODO: player death in void
         # TODO: logging
 
     def update(self) -> bool:
@@ -93,6 +92,10 @@ class Game:
         else:
             self.player.key = [False, False, False, False]
         self.player.physics(self.world)
+
+        if not self.online or self.server:
+            if self.player.y > 40:
+                self.player.die(self.gameRule.keepInventory)
 
         if mouse_pos[1] < size * 40:
             x = math.floor(mouse_pos[0] / size + self.player.x) - 20
