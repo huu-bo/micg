@@ -49,12 +49,10 @@ class Game:
 
         # TODO: players
         # TODO: multiplayer
-        # TODO: make net.player send packets to server if online
-        # TODO: chat and prompt
+        # TODO: make net.player send packets to server if online (net.serverclient something does that?)
         # TODO: draw multiplayer players
         # TODO: player death in void
         # TODO: logging
-        # TODO: errors
 
     def update(self) -> bool:
         """:returns a bool which is False when the game should quit"""
@@ -73,8 +71,12 @@ class Game:
                     if event.key == pygame.K_ESCAPE:
                         self.prompt_shown = False
                     elif event.key == pygame.K_RETURN:
-                        self.prompt_shown = False  # TODO
+                        self.prompt_shown = False
                         self.chat()
+                    elif event.key == pygame.K_BACKSPACE:
+                        self.prompt = self.prompt[:-1]
+                        if not self.prompt:
+                            self.prompt_shown = False
                     else:
                         self.prompt += event.unicode
 
@@ -284,7 +286,15 @@ class Game:
         if text is None:
             text = self.prompt
 
-        self.chat_history.append(Chat(self.prompt, 'c', self.player.name))  # TODO: commands
+        # TODO: send to multiplayer other players
+        if text[0:1] == '/':
+            self.chat_history.append(Chat(text, 'c', self.player.name))
+            self.command(text)
+        else:
+            self.chat_history.append(Chat(text, 'c', self.player.name))
+
+    def error(self, text: str):
+        self.chat_history.append(Chat(text, 'e', self.player.name))
 
     def draw_chat(self):
         if self.prompt_shown:
@@ -296,12 +306,67 @@ class Game:
 
         y = 800 - size - size * len(self.chat_history)
         for c in self.chat_history:
-            color = 255 - c.time  # TODO: make error have red color with no fading
-            self.screen.blit(self.font.render(c.message, True, (color, color, color)), (0, y))
+            if c.type == 'c':
+                color = 255 - c.time
+                color = (color, color, color)
+            elif c.type == 'e':
+                color = (255, 0, 0)
+            else:
+                assert False, f'unknown chat type: ' + "'" + c.type + "'"
+
+            self.screen.blit(self.font.render(c.message, True, color), (0, y))
             c.time += 1
             if c.time == 255:
                 self.chat_history.remove(c)
             y += size
+
+    def command(self, command):  # TODO: if in multiplayer check permissions
+        def _isint(i: str):
+            for c in i:
+                if c not in '0123456789-':  # TODO: something like minecraft '~'
+                    return False
+            try:
+                int(i)
+                return True
+            except ValueError:
+                return True
+
+        def _command(c: list, command_type: str):
+            split = command_type.split(' ')
+
+            if not c:
+                self.error(f"command empty")
+
+            if split[0] != c[0]:
+                return False
+
+            if len(c) != len(split):
+                self.error(f"syntax error '{c}', length {len(c)}, should be {len(split)}")
+                return False
+
+            i = 1
+            for command in split[1:]:
+                if command == 'int':
+                    if not _isint(c[i]):
+                        self.error(f"'{c[i]}' is not of type: '{command}'")
+                        return False
+                elif command == 'block':
+                    pass  # TODO: check block type
+                else:
+                    self.error(f"unknown command parameter type '{command}'")
+                i += 1
+
+            return True
+
+        if not command[0] == '/':
+            self.error(f"game.Game.command(), '{command}' not command?")
+        split = command[1:].split(' ')
+        # self.chat(f"command: '{command}'")
+        # self.chat(f"    split: '{split}'")
+
+        if _command(split, 'set int int block'):
+            self.chat('set int int block')  # TODO: permissions
+            self.world.set(int(split[1]), int(split[2]), block.block(split[3], self.blocks))
 
 
 class GameRule:
@@ -311,6 +376,8 @@ class GameRule:
         self.keepInventory = False
 
         self.fastPhysics = False
+
+        # TODO: multiplayer permissions
 
 
 class Chat:
