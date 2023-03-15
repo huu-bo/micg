@@ -318,15 +318,21 @@ class Game:
             elif c.type == 'e':
                 color = (255, 0, 0)
             else:
-                assert False, f'unknown chat type: ' + "'" + c.type + "'"
+                assert False, f'unknown chat type: ' + "'" + c.type + "'"  # should this crash?
+
+            if self.prompt_shown and color != (255, 0, 0):
+                color = (255, 255, 255)
 
             if self.online:
                 self.screen.blit(self.font.render('[' + c.username + '] ' + c.message, True, color), (0, y))
             else:
                 self.screen.blit(self.font.render(c.message, True, color), (0, y))
-            c.time += 1
-            if c.time == 255:
-                self.chat_history.remove(c)
+
+            if not self.prompt_shown:
+                c.time += 1
+                if c.time == 255:
+                    self.chat_history.remove(c)
+
             y += size
 
     def command(self, command):  # TODO: if in multiplayer check permissions
@@ -403,11 +409,15 @@ class Game:
                 if int(split[3]) != 1:
                     s += 's'
                 self.error(s)
-        elif _command(split, 'gamerule gamerule int'):
-            if self.gameRule.permissionChangeGamerule:
-                self.gameRule.__dict__[split[1]] = not not int(split[2])
-            else:
-                self.error('not enough permissions to change gamerules')
+        elif split[0] == 'gamerule':
+            if len(split) == 1:
+                for rule in self.gameRule.__dict__:
+                    self.chat(rule)
+            elif _command(split, 'gamerule gamerule int'):
+                if self.gameRule.permissionChangeGamerule:
+                    self.gameRule.__dict__[split[1]] = not not int(split[2])
+                else:
+                    self.error('not enough permissions to change gamerules')
         else:
             self.error('unknown or improper command')
 
