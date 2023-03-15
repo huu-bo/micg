@@ -34,6 +34,7 @@ class Game:
 
         self.players = {'self': net.player(False, self.blocks)}
         self.player = self.players['self']
+        self.player.name = 'test'
 
         self.pre_mouse = [False * 3]
         self.font = pygame.font.SysFont('ubuntu', int(size / 1.1))
@@ -316,7 +317,10 @@ class Game:
             else:
                 assert False, f'unknown chat type: ' + "'" + c.type + "'"
 
-            self.screen.blit(self.font.render(c.message, True, color), (0, y))
+            if self.online:
+                self.screen.blit(self.font.render('[' + c.username + '] ' + c.message, True, color), (0, y))
+            else:
+                self.screen.blit(self.font.render(c.message, True, color), (0, y))
             c.time += 1
             if c.time == 255:
                 self.chat_history.remove(c)
@@ -401,6 +405,8 @@ class Game:
                 self.gameRule.__dict__[split[1]] = not not int(split[2])
             else:
                 self.error('not enough permissions to change gamerules')
+        else:
+            self.error('unknown or improper command')
 
 
 class GameRule:
