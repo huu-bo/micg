@@ -148,7 +148,7 @@ class Game:
 
         # draw player
         pygame.draw.rect(screen, (255, 255, 0),
-                         (size * 20, size * 20, size, size))
+                         (size * 20, size * 20 - 2, size, size))
 
         # inventory ui
         self.draw_inventory(mouse_pos, mouse_press, mouse_click)
