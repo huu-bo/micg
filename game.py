@@ -247,15 +247,15 @@ class Game:
                                     pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 2)
 
                                     if kmod & pygame.KMOD_SHIFT and mouse_press[0]:
-                                        block.craft(self.player.inventory, b, f, self.blocks)
+                                        block.craft(self.player.inventory, b, f, self.blocks, self)
                                         pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
                                     elif mouse_click[0]:
-                                        block.craft(self.player.inventory, b, f, self.blocks)
+                                        block.craft(self.player.inventory, b, f, self.blocks, self)
                                         pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
 
                                         self.crafting = False
                                     elif mouse_click[2]:
-                                        block.craft(self.player.inventory, b, f, self.blocks, amount=5)
+                                        block.craft(self.player.inventory, b, f, self.blocks, self, amount=5)
                                         pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
 
                                         self.crafting = False

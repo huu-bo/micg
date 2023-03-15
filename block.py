@@ -163,18 +163,18 @@ class block:
             return []
 
 
-def craft(pi, b, f, blocks, amount=1):  # TODO: make this print in-game
+def craft(pi, b, f, blocks, game, amount=1):
     if b not in blocks:
-        print(b, 'does not exist')
+        game.error(f"block {b}, does not exist")
         return
     if 'craft' not in blocks[b]:
-        print(b, 'not craftable')
+        game.error(f"can't craft {b}")
         return
     if f not in blocks[b]['craft']:
-        print('cannot craft', b, 'from', f)
+        game.error(f"can't craft {b} from {f}")
         return
     if pi[f] < amount * blocks[b]['craft'][f]:
-        print('not enough', f, 'amount:', pi[f], 'amount needed:', amount * blocks[b]['craft'][f])
+        game.error(f"not enough {f}, amount: {pi[f]}, amount needed: {amount * blocks[b]['craft'][f]}")
         return
 
     pi[f] -= amount * blocks[b]['craft'][f]
