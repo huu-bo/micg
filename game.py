@@ -302,9 +302,9 @@ class Game:
                 cursor = '_'
             else:
                 cursor = ''
-            self.screen.blit(self.font.render(self.prompt + cursor, True, (255, 255, 255)), (0, 800))
+            self.screen.blit(self.font.render(self.prompt + cursor, True, (255, 255, 255)), (0, size * 39))
 
-        y = 800 - size - size * len(self.chat_history)
+        y = size * 40 - size - size * len(self.chat_history)
         for c in self.chat_history:
             if c.type == 'c':
                 color = 255 - c.time
@@ -329,7 +329,7 @@ class Game:
                 int(i)
                 return True
             except ValueError:
-                return True
+                return False
 
         def _command(c: list, command_type: str):
             split = command_type.split(' ')
