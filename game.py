@@ -331,6 +331,8 @@ class Game:
                 return False
 
         def _command(c: list, command_type: str):
+            # TODO: if multiplayer send command to server
+
             split = command_type.split(' ')
 
             if not c:
@@ -340,7 +342,7 @@ class Game:
                 return False
 
             if len(c) != len(split):
-                self.error(f"syntax error '{c}', length {len(c)}, should be {len(split)}")
+                self.error(f"syntax error '{' '.join(c)}', length {len(c)}, should be {len(split)}")
                 return False
 
             i = 1
@@ -350,7 +352,20 @@ class Game:
                         self.error(f"'{c[i]}' is not of type: '{command}'")
                         return False
                 elif command == 'block':
-                    pass  # TODO: check block type
+                    if c[i] not in self.blocks:
+                        self.error(f"unknown block type: '{c[i]}'")
+                        return False
+                elif command == 'player':
+                    if c[i] in ['@s', '@p', '@a']:
+                        pass
+                    # TODO: multiplayer players
+                    else:
+                        self.error(f"unknown player '{c[i]}'")
+                        return False
+                elif command == 'gamerule':
+                    if c[i] not in self.gameRule.__dict__:
+                        self.error(f"unknown gamerule '{c[i]}'")
+                        return False
                 else:
                     self.error(f"unknown command parameter type '{command}'")
                 i += 1
@@ -363,9 +378,26 @@ class Game:
         # self.chat(f"command: '{command}'")
         # self.chat(f"    split: '{split}'")
 
+        # TODO: always allow host to execute commands
         if _command(split, 'set int int block'):
-            self.chat('set int int block')  # TODO: permissions
-            self.world.set(int(split[1]), int(split[2]), block.block(split[3], self.blocks))
+            if self.gameRule.permissionSetBlock:
+                self.world.set(int(split[1]), int(split[2]), block.block(split[3], self.blocks))
+            else:
+                self.error('not enough permissions to set block')
+        elif _command(split, 'give player block int'):
+            # TODO: not only to yourself
+            if self.gameRule.permissionGive:
+                self.player.inventory[split[2]] += int(split[3])
+            else:
+                s = 'not enough permissions to give item'
+                if int(split[3]) != 1:
+                    s += 's'
+                self.error(s)
+        elif _command(split, 'gamerule gamerule int'):
+            if self.gameRule.permissionChangeGamerule:
+                self.gameRule.__dict__[split[1]] = not not int(split[2])
+            else:
+                self.error('not enough permissions to change gamerules')
 
 
 class GameRule:
@@ -377,6 +409,9 @@ class GameRule:
         self.fastPhysics = False
 
         # TODO: multiplayer permissions
+        self.permissionChangeGamerule = True  # False: host, True: everyone
+        self.permissionSetBlock = False
+        self.permissionGive = False
 
 
 class Chat:
