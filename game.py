@@ -8,7 +8,7 @@ import noise
 
 
 VERSION = 'Alpha 6'
-size = 20
+size = 17
 
 
 class Game:
@@ -80,13 +80,12 @@ class Game:
                     else:
                         self.prompt += event.unicode
 
-        kmod = pygame.key.get_mods()
         mouse_pos = pygame.mouse.get_pos()
         mouse_press = pygame.mouse.get_pressed(5)
         keys = pygame.key.get_pressed()
 
         if not self.prompt_shown:
-            self.player.key = [keys[pygame.K_w], keys[pygame.K_a], keys[pygame.K_s], keys[pygame.K_d]]
+            self.player.key = [keys[pygame.K_w] or keys[pygame.K_UP], keys[pygame.K_a] or keys[pygame.K_LEFT], keys[pygame.K_s] or keys[pygame.K_DOWN], keys[pygame.K_d] or keys[pygame.K_RIGHT]]
         else:
             self.player.key = [False, False, False, False]
         self.player.physics(self.world)
