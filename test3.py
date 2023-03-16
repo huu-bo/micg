@@ -24,3 +24,4 @@ while run:
 
 g.save_config()
 pygame.quit()
+logger.log('game quit successfully')

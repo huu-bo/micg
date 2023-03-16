@@ -2,10 +2,12 @@ import json
 import math
 import os
 import pygame
+
 import block
 import logger
 import net
 import noise
+
 
 VERSION = 'Alpha 6'
 size = 20
@@ -55,7 +57,7 @@ class Game:
         # TODO: draw multiplayer players
         # TODO: logging
 
-    def save_config(self):
+    def save_config(self):  # TODO: what is this newline usage
 
         filename = self.configfile
 
@@ -290,18 +292,15 @@ class Game:
 
                                     if kmod & pygame.KMOD_SHIFT and mouse_press[0]:
                                         block.craft(self.player.inventory, b, f, self.blocks, self)
-                                        pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2),
-                                                         3)
+                                        pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
                                     elif mouse_click[0]:
                                         block.craft(self.player.inventory, b, f, self.blocks, self)
-                                        pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2),
-                                                         3)
+                                        pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
 
                                         self.crafting = False
                                     elif mouse_click[2]:
                                         block.craft(self.player.inventory, b, f, self.blocks, self, amount=5)
-                                        pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2),
-                                                         3)
+                                        pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
 
                                         self.crafting = False
 
@@ -340,10 +339,11 @@ class Game:
         # TODO: send to multiplayer other players
         if text[0:1] == '/':
             self.command(text)
-            logger.log("Player " + self.player.name + " issued the command: " + text)
+
+            logger.log(f'[{self.player.name}] [command] ' + text)  # TODO: multiplayer players
         else:
             self.chat_history.append(Chat(text, 'c', self.player.name))
-            logger.log("[CHAT] " + text)
+            logger.log(f'[{self.player.name}] [chat] ' + text)  # TODO: multiplayer players
 
     def info(self, text: str):
         self.chat_history.append(Chat(text, 'c', "[INFO]"))
@@ -374,16 +374,15 @@ class Game:
             if self.prompt_shown and color != (255, 0, 0):
                 color = (255, 255, 255)
 
-            try:
-                # if self.online:
+            if self.online:
                 self.screen.blit(self.font.render('[' + c.username + '] ' + c.message, True, color), (0, y))
-            # else:
-            #   self.screen.blit(self.font.render(c.message, True, color), (0, y))
-            except:
-                pass
+            else:
+                self.screen.blit(self.font.render(c.message, True, color), (0, y))
 
             if not self.prompt_shown:
                 c.time += 1
+                if c.time == 255:
+                    self.chat_history.remove(c)
 
             y += size
 
@@ -479,7 +478,7 @@ class Game:
                     self.error('Not enough permissions to change gamerules!')
         elif split[0] == 'saveconfig':
             self.save_config()
-        elif split[0] == 'loadconfig':
+        elif split[0] == 'loadconfig':  # TODO: does it load config at startup?
             self.load_config()
         else:
             self.error('Unknown or improper command: ' + split[0])
@@ -506,6 +505,3 @@ class Chat:
         self.type = t
         self.username = username
         self.time = 0
-
-    def __get_message(self):
-        return self.message
