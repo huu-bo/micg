@@ -115,7 +115,7 @@ class Game:
                 self.world.to_update.append(b)
             if not self.world.get(x, y).solid:
                 if mouse_press[0]:
-                    if self.player.inventory[self.player.selection] > 0:
+                    if self.player.inventory[self.player.selection] > 0 and y < 40:
                         b = block.block(self.player.selection, self.blocks)
                         self.world.set(x, y, b)
                         self.world.to_update.append(b)
