@@ -1,6 +1,5 @@
 import math
 import pygame
-import typing
 
 import block
 import logger
@@ -78,6 +77,12 @@ class Game:
                         self.prompt = self.prompt[:-1]
                         if not self.prompt:
                             self.prompt_shown = False
+                    elif event.key == pygame.K_UP:
+                        if len(self.chat_history) > 0:
+                            for c in self.chat_history:
+                                if c == self.chat_history[-1]:
+                                    self.prompt = c.message
+                                    # TODO: fix this code lol
                     else:
                         self.prompt += event.unicode
 
@@ -295,10 +300,15 @@ class Game:
 
         # TODO: send to multiplayer other players
         if text[0:1] == '/':
-            self.chat_history.append(Chat(text, 'c', self.player.name))
             self.command(text)
+            logger.log("Player " + self.player.name + " issued the command: " + text)
         else:
             self.chat_history.append(Chat(text, 'c', self.player.name))
+            logger.log(text)
+
+    def info(self, text: str):
+        self.chat_history.append(Chat(text, 'c', "[INFO]"))
+        logger.log(text)
 
     def error(self, text: str):
         self.chat_history.append(Chat(text, 'e', self.player.name))
@@ -310,7 +320,7 @@ class Game:
                 cursor = '_'
             else:
                 cursor = ''
-            self.screen.blit(self.font.render(self.prompt + cursor, True, (255, 255, 255)), (0, size * 39))
+            self.screen.blit(self.font.render("> " + self.prompt + cursor, True, (255, 255, 255)), (0, size * 39))
 
         y = size * 40 - size - size * len(self.chat_history)
         for c in self.chat_history:
@@ -320,7 +330,7 @@ class Game:
             elif c.type == 'e':
                 color = (255, 0, 0)
             else:
-                assert False, f'unknown chat type: ' + "'" + c.type + "'"  # should this crash?
+                assert False, f'Unknown chat type: ' + "'" + c.type + "'"  # should this crash?
 
             if self.prompt_shown and color != (255, 0, 0):
                 color = (255, 255, 255)
@@ -330,8 +340,10 @@ class Game:
             else:
                 self.screen.blit(self.font.render(c.message, True, color), (0, y))
 
+            # TODO: fix alpha on background
             if not self.prompt_shown:
                 c.time += 1
+
                 if c.time == 255:
                     self.chat_history.remove(c)
 
@@ -354,13 +366,13 @@ class Game:
             split = command_type.split(' ')
 
             if not c:
-                self.error(f"command empty")
+                self.error(f"Command may not be empty!")
 
             if split[0] != c[0]:
                 return False
 
             if len(c) != len(split):
-                self.error(f"syntax error '{' '.join(c)}', length {len(c)}, should be {len(split)}")
+                self.error(f"Syntax error '{' '.join(c)}', length {len(c)}, should be {len(split)}")
                 return False
 
             i = 1
@@ -371,21 +383,21 @@ class Game:
                         return False
                 elif command == 'block':
                     if c[i] not in self.blocks:
-                        self.error(f"unknown block type: '{c[i]}'")
+                        self.error(f"Unknown block type: '{c[i]}'")
                         return False
                 elif command == 'player':
                     if c[i] in ['@s', '@p', '@a']:
                         pass
                     # TODO: multiplayer players
                     else:
-                        self.error(f"unknown player '{c[i]}'")
+                        self.error(f"Unknown player '{c[i]}'")
                         return False
                 elif command == 'gamerule':
                     if c[i] not in self.gameRule.__dict__:
-                        self.error(f"unknown gamerule '{c[i]}'")
+                        self.error(f"Unknown gamerule '{c[i]}'")
                         return False
                 else:
-                    self.error(f"unknown command parameter type '{command}'")
+                    self.error(f"Unknown command parameter type '{command}'")
                 i += 1
 
             return True
@@ -400,16 +412,22 @@ class Game:
         if _command(split, 'set int int block'):
             if self.gameRule.permissionSetBlock:
                 self.world.set(int(split[1]), int(split[2]), block.block(split[3], self.blocks))
+                self.info("Set block " + split[1] + " " + split[2] + " to " + split[3])
             else:
-                self.error('not enough permissions to set block')
+                self.error('Not enough permissions to set a block!')
         elif _command(split, 'give player block int'):
             # TODO: not only to yourself
             if self.gameRule.permissionGive:
                 self.player.inventory[split[2]] += int(split[3])
+                self.info("Gave " + split[3] + " " + split[2] + " to " + self.player.name)
             else:
-                s = 'not enough permissions to give item'
+                s = 'Not enough permissions to give an item'
+
                 if int(split[3]) != 1:
-                    s += 's'
+                    s += 's!'
+                else:
+                    s += "!"
+
                 self.error(s)
         elif split[0] == 'gamerule':
             if len(split) == 1:
@@ -418,10 +436,11 @@ class Game:
             elif _command(split, 'gamerule gamerule int'):
                 if self.gameRule.permissionChangeGamerule:
                     self.gameRule.__dict__[split[1]] = not not int(split[2])
+                    self.info("Changed gamerule " + split[1] + " to " + split[2])
                 else:
-                    self.error('not enough permissions to change gamerules')
+                    self.error('Not enough permissions to change gamerules!')
         else:
-            self.error('unknown or improper command')
+            self.error('Unknown or improper command: ' + split[0])
 
 
 class GameRule:
@@ -445,3 +464,6 @@ class Chat:
         self.type = t
         self.username = username
         self.time = 0
+
+    def __get_message(self):
+        return self.message
