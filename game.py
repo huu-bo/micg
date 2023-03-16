@@ -3,6 +3,7 @@ import pygame
 import typing
 
 import block
+import logger
 import net
 import noise
 
@@ -294,6 +295,7 @@ class Game:
 
     def error(self, text: str):
         self.chat_history.append(Chat(text, 'e', self.player.name))
+        logger.log(text)
 
     def draw_chat(self):
         if self.prompt_shown:
