@@ -9,7 +9,7 @@ import noise
 
 
 VERSION = 'Alpha 6'
-size = 17
+size = 20
 
 
 class Game:
@@ -35,6 +35,7 @@ class Game:
 
         self.players = {'self': net.player(False, self.blocks)}
         self.player = self.players['self']
+        self.player.name = 'test'
 
         self.pre_mouse = [False * 3]
         self.font = pygame.font.SysFont('ubuntu', int(size / 1.1))
@@ -52,7 +53,6 @@ class Game:
         # TODO: multiplayer
         # TODO: make net.player send packets to server if online (net.serverclient something does that?)
         # TODO: draw multiplayer players
-        # TODO: player death in void
         # TODO: logging
 
     def update(self) -> bool:
@@ -86,10 +86,17 @@ class Game:
         keys = pygame.key.get_pressed()
 
         if not self.prompt_shown:
-            self.player.key = [keys[pygame.K_w] or keys[pygame.K_UP], keys[pygame.K_a] or keys[pygame.K_LEFT], keys[pygame.K_s] or keys[pygame.K_DOWN], keys[pygame.K_d] or keys[pygame.K_RIGHT]]
+            self.player.key = [keys[pygame.K_w] or keys[pygame.K_UP],
+                               keys[pygame.K_a] or keys[pygame.K_LEFT],
+                               keys[pygame.K_s] or keys[pygame.K_DOWN],
+                               keys[pygame.K_d] or keys[pygame.K_RIGHT]]
         else:
             self.player.key = [False, False, False, False]
         self.player.physics(self.world)
+
+        if not self.online or self.server:
+            if self.player.y > 40:
+                self.player.die(self.gameRule.keepInventory)
 
         if mouse_pos[1] < size * 40:
             x = math.floor(mouse_pos[0] / size + self.player.x) - 20
@@ -149,7 +156,7 @@ class Game:
 
         # draw player
         pygame.draw.rect(screen, (255, 255, 0),
-                         (size * 20, size * 20, size, size))
+                         (size * 20, size * 20 - 2, size, size))
 
         # inventory ui
         self.draw_inventory(mouse_pos, mouse_press, mouse_click)
@@ -241,15 +248,15 @@ class Game:
                                     pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 2)
 
                                     if kmod & pygame.KMOD_SHIFT and mouse_press[0]:
-                                        block.craft(self.player.inventory, b, f, self.blocks)
+                                        block.craft(self.player.inventory, b, f, self.blocks, self)
                                         pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
                                     elif mouse_click[0]:
-                                        block.craft(self.player.inventory, b, f, self.blocks)
+                                        block.craft(self.player.inventory, b, f, self.blocks, self)
                                         pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
 
                                         self.crafting = False
                                     elif mouse_click[2]:
-                                        block.craft(self.player.inventory, b, f, self.blocks, amount=5)
+                                        block.craft(self.player.inventory, b, f, self.blocks, self, amount=5)
                                         pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
 
                                         self.crafting = False
@@ -313,12 +320,21 @@ class Game:
             elif c.type == 'e':
                 color = (255, 0, 0)
             else:
-                assert False, f'unknown chat type: ' + "'" + c.type + "'"
+                assert False, f'unknown chat type: ' + "'" + c.type + "'"  # should this crash?
 
-            self.screen.blit(self.font.render(c.message, True, color), (0, y))
-            c.time += 1
-            if c.time == 255:
-                self.chat_history.remove(c)
+            if self.prompt_shown and color != (255, 0, 0):
+                color = (255, 255, 255)
+
+            if self.online:
+                self.screen.blit(self.font.render('[' + c.username + '] ' + c.message, True, color), (0, y))
+            else:
+                self.screen.blit(self.font.render(c.message, True, color), (0, y))
+
+            if not self.prompt_shown:
+                c.time += 1
+                if c.time == 255:
+                    self.chat_history.remove(c)
+
             y += size
 
     def command(self, command):  # TODO: if in multiplayer check permissions
@@ -333,6 +349,8 @@ class Game:
                 return False
 
         def _command(c: list, command_type: str):
+            # TODO: if multiplayer send command to server
+
             split = command_type.split(' ')
 
             if not c:
@@ -342,7 +360,7 @@ class Game:
                 return False
 
             if len(c) != len(split):
-                self.error(f"syntax error '{c}', length {len(c)}, should be {len(split)}")
+                self.error(f"syntax error '{' '.join(c)}', length {len(c)}, should be {len(split)}")
                 return False
 
             i = 1
@@ -352,7 +370,20 @@ class Game:
                         self.error(f"'{c[i]}' is not of type: '{command}'")
                         return False
                 elif command == 'block':
-                    pass  # TODO: check block type
+                    if c[i] not in self.blocks:
+                        self.error(f"unknown block type: '{c[i]}'")
+                        return False
+                elif command == 'player':
+                    if c[i] in ['@s', '@p', '@a']:
+                        pass
+                    # TODO: multiplayer players
+                    else:
+                        self.error(f"unknown player '{c[i]}'")
+                        return False
+                elif command == 'gamerule':
+                    if c[i] not in self.gameRule.__dict__:
+                        self.error(f"unknown gamerule '{c[i]}'")
+                        return False
                 else:
                     self.error(f"unknown command parameter type '{command}'")
                 i += 1
@@ -365,9 +396,32 @@ class Game:
         # self.chat(f"command: '{command}'")
         # self.chat(f"    split: '{split}'")
 
+        # TODO: always allow host to execute commands
         if _command(split, 'set int int block'):
-            self.chat('set int int block')  # TODO: permissions
-            self.world.set(int(split[1]), int(split[2]), block.block(split[3], self.blocks))
+            if self.gameRule.permissionSetBlock:
+                self.world.set(int(split[1]), int(split[2]), block.block(split[3], self.blocks))
+            else:
+                self.error('not enough permissions to set block')
+        elif _command(split, 'give player block int'):
+            # TODO: not only to yourself
+            if self.gameRule.permissionGive:
+                self.player.inventory[split[2]] += int(split[3])
+            else:
+                s = 'not enough permissions to give item'
+                if int(split[3]) != 1:
+                    s += 's'
+                self.error(s)
+        elif split[0] == 'gamerule':
+            if len(split) == 1:
+                for rule in self.gameRule.__dict__:
+                    self.chat(rule)
+            elif _command(split, 'gamerule gamerule int'):
+                if self.gameRule.permissionChangeGamerule:
+                    self.gameRule.__dict__[split[1]] = not not int(split[2])
+                else:
+                    self.error('not enough permissions to change gamerules')
+        else:
+            self.error('unknown or improper command')
 
 
 class GameRule:
@@ -379,6 +433,9 @@ class GameRule:
         self.fastPhysics = False
 
         # TODO: multiplayer permissions
+        self.permissionChangeGamerule = True  # False: host, True: everyone
+        self.permissionSetBlock = False
+        self.permissionGive = False
 
 
 class Chat:

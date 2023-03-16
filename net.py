@@ -151,6 +151,18 @@ class player:
         self.yv += .1
         self.y += self.yv
 
+    def die(self, keep_inventory):
+        self.x = 0
+        self.y = 0
+        self.xv = 0
+        self.yv = 0
+
+        self.key = [False, False, False, False]
+
+        if not keep_inventory:
+            for i in self.inventory:
+                self.inventory[i] = 0  # TODO: gamerule keepInventory
+
 
 class Server:
     def __init__(self, world, ip='localhost'):
