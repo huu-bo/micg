@@ -3,6 +3,8 @@ import random
 import block
 import json
 
+import net
+
 
 class generator:
     def __init__(self, seed, floor=10):
@@ -90,9 +92,11 @@ class generator:
 
 
 class world:
-    def __init__(self, gen: generator, gen_new=True, server=None, serving=False):
+    def __init__(self, gen: generator, game, gen_new=True, server=None, serving=False):
         self.gen = gen
         self.world = {}
+
+        self.game = game
 
         self.gen_new = gen_new
         self.server = server
@@ -107,6 +111,10 @@ class world:
 
         if self.serving and self.server is None:
             assert False, 'you did it wrong'
+        if self.server is not None:
+            if type(self.server) is not net.Server and type(self.server) is not net.client:
+                print(self.server)
+                raise ValueError('???????????????????')
 
     def gen_chunk(self, x, y):
         # print('chunk', x)

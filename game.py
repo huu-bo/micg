@@ -17,6 +17,7 @@ class Game:
     def __init__(self, screen: pygame.Surface):
         """MICG
         requires pygame to be initialised
+
         :argument screen: the pygame display window"""
 
         self.gameRule = GameRule()
@@ -24,13 +25,14 @@ class Game:
 
         self.online = False
         self.server = False
+        self.connection = None
 
         self.prompt = ''
         self.prompt_shown = False
         self.chat_history = []
 
         gen = noise.generator(0)
-        self.world = noise.world(gen)
+        self.world = noise.world(gen, self)
         self.blocks = self.world.blocks
 
         self.players = {'self': net.player(False, self.blocks)}
@@ -184,7 +186,6 @@ class Game:
                         pygame.draw.rect(screen, b.color,
                                          (round((x - self.player.x % 1) * size), round((y - self.player.y % 1) * size),
                                           size, size))
-                        # TODO: debug views
                         if self.debug['block_stress']:
                             screen.blit(self.font.render(str(b.support), True, (100, 0, 0)),
                                         (round((x - self.player.x % 1) * size), round((y - self.player.y % 1) * size)))
@@ -343,6 +344,7 @@ class Game:
             logger.log(f'[{self.player.name}] [command] ' + text)  # TODO: multiplayer players
         else:
             self.chat_history.append(Chat(text, 'c', self.player.name))
+
             logger.log(f'[{self.player.name}] [chat] ' + text)  # TODO: multiplayer players
 
     def info(self, text: str):
@@ -386,7 +388,7 @@ class Game:
 
             y += size
 
-    def command(self, command):  # TODO: if in multiplayer check permissions
+    def command(self, command: str):  # TODO: if in multiplayer check permissions
         def _isint(i: str):
             for c in i:
                 if c not in '0123456789-':  # TODO: something like minecraft '~'
@@ -476,12 +478,51 @@ class Game:
                     self.info("Changed gamerule " + split[1] + " to " + split[2])
                 else:
                     self.error('Not enough permissions to change gamerules!')
+
         elif split[0] == 'saveconfig':
             self.save_config()
         elif split[0] == 'loadconfig':  # TODO: does it load config at startup?
             self.load_config()
+
+        elif split[0] == 'join':
+            if len(split) == 1:
+                self.join()
+            elif len(split) == 1:
+                self.join(split[1])
+            else:
+                self.error(f"use join as '/join' or '/join ip' not '{command}'")
+        elif split[0] == 'host':
+            if len(split) == 1:
+                self.host()
+            elif len(split) == 1:
+                self.host(split[1])
+            else:
+                self.error(f"use host as '/host' or '/host ip' not '{command}'")
+
         else:
             self.error('Unknown or improper command: ' + split[0])
+
+    def join(self, ip='localhost'):
+        self.connection = net.client(self.world, ip=ip)
+
+        self.world = noise.world(noise.generator(0), self, gen_new=False, server=self.connection, serving=False)
+        self.connection.world = self.world
+
+        self.online = True
+        self.server = False
+
+    def host(self, ip='localhost'):
+        self.connection = net.Server(None, ip=ip)
+
+        self.world = noise.world(noise.generator(0), self, True, self.connection, True)
+        self.connection.world = self.world
+
+        self.online = True
+        self.server = True
+
+    def quit(self):
+        if self.connection is not None:
+            self.connection.exit()
 
 
 class GameRule:

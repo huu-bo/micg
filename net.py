@@ -6,6 +6,7 @@ import math
 import time
 
 import block
+import noise
 
 
 class net:
@@ -66,6 +67,10 @@ class net:
 # AM:
 # x y
 
+# AD:
+#
+# player death
+
 # IM:
 # x y name
 # sent from server_client to client to let client know about other clients moving
@@ -83,7 +88,7 @@ class net:
 
 
 class player:
-    def __init__(self, online, blocks, server=None):
+    def __init__(self, online, blocks, server=None, physics=True):
         self.x = 0
         self.y = 0
         self.xv = 0
@@ -97,61 +102,69 @@ class player:
         if online and server is None:
             print('player online and no connection?????')
         self.server = server
+        self.online = online
+        self.phy = physics
 
         self.inventory = {i: 0 for i in blocks if blocks[i]['solid']}
         # TODO: property for if item should be mineable and be able to put in the inventory
 
     def physics(self, world):
-        if self.key[3]:
-            self.xv += .1
-        if self.key[1]:
-            self.xv -= .1
+        if not self.phy:
+            self.server.net.send(f'AM{self.x} {self.y}')
+        else:
+            if self.key[3]:
+                self.xv += .1
+            if self.key[1]:
+                self.xv -= .1
 
-        floor = False
-        hit = False
+            floor = False
+            hit = False
 
-        while world.get(math.floor(self.x), math.floor(self.y) - 1).solid or \
-                world.get(math.ceil(self.x), math.floor(self.y) - 1).solid:
-            self.yv = 0
-            self.y += .01
-            floor = None
-            hit = True
-        if hit:
-            self.y -= .01
-        if floor is None:
-            return
+            while world.get(math.floor(self.x), math.floor(self.y) - 1).solid or \
+                    world.get(math.ceil(self.x), math.floor(self.y) - 1).solid:
+                self.yv = 0
+                self.y += .01
+                floor = None
+                hit = True
+            if hit:
+                self.y -= .01
+            if floor is None:
+                return
 
-        hit = False
-        while world.get(math.floor(self.x), math.ceil(self.y)).solid or \
-                world.get(math.ceil(self.x), math.ceil(self.y)).solid:
-            self.yv = 0
-            self.y -= .01
-            floor = True
-            hit = True
-        # if hit:
-        #     self.y += .005
+            hit = False
+            while world.get(math.floor(self.x), math.ceil(self.y)).solid or \
+                    world.get(math.ceil(self.x), math.ceil(self.y)).solid:
+                self.yv = 0
+                self.y -= .01
+                floor = True
+                hit = True
+            # if hit:
+            #     self.y += .005
 
-        if floor and self.key[0]:
-            self.yv = -.55
+            if floor and self.key[0]:
+                self.yv = -.55
 
-        self.x += self.xv
-        while world.get(math.ceil(self.x), math.floor(self.y) + 1).solid:
-            self.x -= .01
-            self.xv = 0
-        while world.get(math.floor(self.x), math.floor(self.y) + 1).solid:
-            self.x += .01
-            self.xv = 0
+            self.x += self.xv
+            while world.get(math.ceil(self.x), math.floor(self.y) + 1).solid:
+                self.x -= .01
+                self.xv = 0
+            while world.get(math.floor(self.x), math.floor(self.y) + 1).solid:
+                self.x += .01
+                self.xv = 0
 
-        if abs(self.xv) < .03:
-            if abs(round(self.x) - self.x) < .2:
-                self.x = round(self.x)
+            if abs(self.xv) < .03:
+                if abs(round(self.x) - self.x) < .2:
+                    self.x = round(self.x)
 
-        self.xv /= 2
+            self.xv /= 2
 
-        self.yv += .1
-        self.y += self.yv
+            self.yv += .1
+            self.y += self.yv
 
     def die(self, keep_inventory):
+        if self.phy:
+            self.server.net.send('AD')
+
         self.x = 0
         self.y = 0
         self.xv = 0
@@ -161,7 +174,7 @@ class player:
 
         if not keep_inventory:
             for i in self.inventory:
-                self.inventory[i] = 0  # TODO: gamerule keepInventory
+                self.inventory[i] = 0
 
 
 class Server:
@@ -188,7 +201,7 @@ class Server:
             try:
                 c, address = self.server.accept()
                 print('accepted', c, address)
-                p = player()
+                p = player(True, self.world.blocks)
                 self.players.append(p)
                 pi = pipe()
                 self.pipes.append(pi)
@@ -229,10 +242,11 @@ class server_client:
         self.r = True  # TODO: what is 'r'
         self.name = 'NAME_NOT_SENT'
         self.player = p
+        self.player.server = self
         self.pipe = pi
         self.net = net(c)
 
-        self.world = self.s.world
+        self.world: noise.world = self.s.world
 
         self.c.settimeout(.02)
         self.run()
@@ -289,6 +303,9 @@ class server_client:
                 self.world.set(int(split[0]), int(split[1]), block.block(split[2], self.world.blocks))
                 self.s.send_all(data)  # let all the other clients know,
                 # will cause the packet to be sent back to the client that sent it
+
+            elif data[1] == 'D':
+                self.player.die(self.world.game.gameRule.keepInventory)
 
             elif data[1] == 'Q':
                 self.close()
@@ -433,7 +450,9 @@ class client:
                     self.chunk_requests[(int(split[0]), int(split[1]))] = True
                 elif data[1] == 'N':
                     if data[2:] not in self.players:
-                        self.players[data[2:]] = player()
+                        p = player(True, self.world.blocks)
+                        p.name = data[2:]
+                        self.players[data[2:]] = p
                         print(f'player {data[2:]} joined')
                     else:
                         print(f'player {data[2:]} joined multiple times')  # TODO: let clients know about other clients disconnecting
@@ -454,7 +473,7 @@ class client:
     def get_chunk(self, x, y):
         if (x, y) not in self.chunk_requests:
             packet = 'IC' + str(x) + ' ' + str(y)
-            self.net.send(packet)
+            self.net.send(packet)  # TODO: will send packets even if connection is not established and crash
             self.chunk_requests[(x, y)] = False
 
             t = 0
