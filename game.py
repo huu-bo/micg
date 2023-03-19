@@ -15,7 +15,6 @@ class Game:
     def __init__(self, screen: pygame.Surface):
         """MICG
         requires pygame to be initialised
-
         :argument screen: the pygame display window"""
 
         self.gameRule = GameRule()
@@ -304,15 +303,15 @@ class Game:
             logger.log("Player " + self.player.name + " issued the command: " + text)
         else:
             self.chat_history.append(Chat(text, 'c', self.player.name))
-            logger.log(text)
+            logger.log("[CHAT] " + text)
 
     def info(self, text: str):
         self.chat_history.append(Chat(text, 'c', "[INFO]"))
-        logger.log(text)
+        logger.log("[INFO] " + text)
 
     def error(self, text: str):
         self.chat_history.append(Chat(text, 'e', self.player.name))
-        logger.log(text)
+        logger.log("[ERROR] " + text)
 
     def draw_chat(self):
         if self.prompt_shown:
@@ -335,17 +334,16 @@ class Game:
             if self.prompt_shown and color != (255, 0, 0):
                 color = (255, 255, 255)
 
-            if self.online:
-                self.screen.blit(self.font.render('[' + c.username + '] ' + c.message, True, color), (0, y))
-            else:
-                self.screen.blit(self.font.render(c.message, True, color), (0, y))
+            try:
+                if self.online:
+                    self.screen.blit(self.font.render('[' + c.username + '] ' + c.message, True, color), (0, y))
+                else:
+                    self.screen.blit(self.font.render(c.message, True, color), (0, y))
+            except:
+                pass
 
-            # TODO: fix alpha on background
             if not self.prompt_shown:
                 c.time += 1
-
-                if c.time == 255:
-                    self.chat_history.remove(c)
 
             y += size
 
