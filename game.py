@@ -1,11 +1,11 @@
+import json
 import math
+import os
 import pygame
-
 import block
 import logger
 import net
 import noise
-
 
 VERSION = 'Alpha 6'
 size = 20
@@ -35,6 +35,8 @@ class Game:
         self.player = self.players['self']
         self.player.name = 'test'
 
+        self.configfile = 'config.json'
+
         self.pre_mouse = [False * 3]
         self.font = pygame.font.SysFont('ubuntu', int(size / 1.1))
         self.crafting = False
@@ -52,6 +54,38 @@ class Game:
         # TODO: make net.player send packets to server if online (net.serverclient something does that?)
         # TODO: draw multiplayer players
         # TODO: logging
+
+    def save_config(self):
+
+        filename = self.configfile
+
+        if filename not in os.listdir('.'):
+            with open(filename, 'w') as file:
+                json.dump({}, file)
+
+        with open(filename, 'w') as file:
+
+            data = {
+                "username": self.player.name
+            }
+
+            json.dump(data, file)
+
+    def load_config(self):
+
+        filename = self.configfile
+
+        if filename not in os.listdir('.'):
+            with open(filename, 'w') as file:
+                json.dump({
+                    "username": "test"
+                }, file)
+                return
+
+        with open(filename, "r") as file:
+            data = json.load(file)
+
+            self.player.name = str(data["username"])
 
     def update(self) -> bool:
         """:returns a bool which is False when the game should quit"""
@@ -156,7 +190,8 @@ class Game:
                     if self.debug['block_update']:
                         if b in self.world.to_update or b in self.world.to_append:
                             pygame.draw.rect(screen, (255, 0, 0),
-                                             (round((x - self.player.x % 1) * size), round((y - self.player.y % 1) * size), size, size), 2)
+                                             (round((x - self.player.x % 1) * size),
+                                              round((y - self.player.y % 1) * size), size, size), 2)
 
         # draw player
         pygame.draw.rect(screen, (255, 255, 0),
@@ -181,8 +216,10 @@ class Game:
                              (800, (40 - self.player.y % 40) * size))
 
         if self.debug['player_info']:
-            screen.blit(self.font.render(f'Position: {round(self.player.x, 3)} {round(self.player.y, 3)}', True, (255, 255, 255)), (10, 5))
-            screen.blit(self.font.render(f'Motion: {round(self.player.xv, 3)} {round(self.player.yv, 3)}', True, (255, 255, 255)), (10, 25))
+            screen.blit(self.font.render(f'Position: {round(self.player.x, 3)} {round(self.player.y, 3)}', True,
+                                         (255, 255, 255)), (10, 5))
+            screen.blit(self.font.render(f'Motion: {round(self.player.xv, 3)} {round(self.player.yv, 3)}', True,
+                                         (255, 255, 255)), (10, 25))
             # screen.blit(self.font.render(f'onGround: {self.player}', True, (255, 255, 255)), (10, 55))
 
         if len(self.world.to_update) > 100 or self.debug['to_update']:
@@ -253,15 +290,18 @@ class Game:
 
                                     if kmod & pygame.KMOD_SHIFT and mouse_press[0]:
                                         block.craft(self.player.inventory, b, f, self.blocks, self)
-                                        pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
+                                        pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2),
+                                                         3)
                                     elif mouse_click[0]:
                                         block.craft(self.player.inventory, b, f, self.blocks, self)
-                                        pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
+                                        pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2),
+                                                         3)
 
                                         self.crafting = False
                                     elif mouse_click[2]:
                                         block.craft(self.player.inventory, b, f, self.blocks, self, amount=5)
-                                        pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2), 3)
+                                        pygame.draw.rect(self.screen, (0, 0, 0), (i * size, size * 40, size, size * 2),
+                                                         3)
 
                                         self.crafting = False
 
@@ -335,10 +375,10 @@ class Game:
                 color = (255, 255, 255)
 
             try:
-                if self.online:
-                    self.screen.blit(self.font.render('[' + c.username + '] ' + c.message, True, color), (0, y))
-                else:
-                    self.screen.blit(self.font.render(c.message, True, color), (0, y))
+                # if self.online:
+                self.screen.blit(self.font.render('[' + c.username + '] ' + c.message, True, color), (0, y))
+            # else:
+            #   self.screen.blit(self.font.render(c.message, True, color), (0, y))
             except:
                 pass
 
@@ -437,6 +477,10 @@ class Game:
                     self.info("Changed gamerule " + split[1] + " to " + split[2])
                 else:
                     self.error('Not enough permissions to change gamerules!')
+        elif split[0] == 'saveconfig':
+            self.save_config()
+        elif split[0] == 'loadconfig':
+            self.load_config()
         else:
             self.error('Unknown or improper command: ' + split[0])
 
