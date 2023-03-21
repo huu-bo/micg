@@ -58,6 +58,7 @@ class Game:
         # TODO: make net.player send packets to server if online (net.serverclient something does that?)
         # TODO: draw multiplayer players
         # TODO: logging
+        # TODO: put a lock on player because net.client updates player position while rendering
 
     def save_config(self):  # TODO: what is this newline usage
 
@@ -131,6 +132,9 @@ class Game:
         else:
             self.player.key = [False, False, False, False]
         self.player.physics(self.world)
+        if self.online and self.server:
+            for player in self.connection.players:
+                player.physics(self.world)
 
         if not self.online or self.server:
             if self.player.y > 40:
@@ -194,7 +198,21 @@ class Game:
 
         # draw player
         pygame.draw.rect(screen, (255, 255, 0),
-                         (size * 20, size * 20 - 2, size, size))
+                         (size * 20, size * 20 - 2, size, size))  # TODO: 2 is a random number, it only works on scale 20
+
+        # draw online players
+        if self.online and self.server:
+            for p in self.connection.players:
+                # pygame.draw.rect(screen, (255, 0, 0), ((p.x - px) * size, (p.y - py) * size, size, size))
+                # pygame.draw.rect(screen, (255, 0, 0), (round(p.x * size), p.y * size, size, size))
+                print(p.x, p.y)
+                pygame.draw.rect(screen, (255, 0, 0),
+                                 (round((p.x - self.player.x) * size), round((p.y - self.player.y + 20) * size), size, size))
+        elif self.online and not self.server:
+            for i in self.connection.players:
+                p = self.connection.players[i]
+                pygame.draw.rect(screen, (255, 0, 0),
+                                 (round((p.x - self.player.x) * size), round((p.y - self.player.x + 20) * size), size, size))
 
         # inventory ui
         self.draw_inventory(mouse_pos, mouse_press, mouse_click)
@@ -503,6 +521,9 @@ class Game:
 
         self.world = noise.world(noise.generator(0), self, gen_new=False, server=self.connection, serving=False)
         self.connection.world = self.world
+
+        self.connection.players[self.connection.name] = net.player(True, self.blocks, server=self.connection, physics=False)
+        self.player = self.connection.players[self.connection.name]
 
         self.online = True
         self.server = False

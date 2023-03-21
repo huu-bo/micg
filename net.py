@@ -110,7 +110,14 @@ class player:
 
     def physics(self, world):
         if not self.phy:
-            self.server.net.send(f'AM{self.x} {self.y}')
+            # self.server.net.send(f'AM{self.x} {self.y}')
+            packet = 'AK'
+            for k in self.key:
+                if k:
+                    packet += '1'
+                else:
+                    packet += '0'
+            self.server.net.send(packet)
         else:
             if self.key[3]:
                 self.xv += .1
@@ -190,6 +197,7 @@ class Server:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.settimeout(.5)
         self.server.bind((ip, 60000))
+        # self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.listen()
 
         self.accept_thread = threading.Thread(target=self._accept, name='accept')
@@ -231,7 +239,7 @@ class Server:
 
     def send_all_except(self, data, exception):  # TODO: broken
         for p in self.pipes:
-            if p != exception:
+            if p is not exception:
                 p.send(data)
 
 
@@ -328,15 +336,13 @@ class server_client:
                 for packet in data:
                     # if data[:2] == 'AP':
                     self.net.send(packet)
-                    data = self.pipe.recv()
 
-            if self.r:
-                if self.player.xv != 0 or self.player.yv != 0:
-                    packet = 'AM' + str(self.player.x) + ' ' + str(self.player.y)
-                    self.net.send(packet)
+            if self.player.xv != 0 or self.player.yv != 0:
+                packet = 'AM' + str(self.player.x) + ' ' + str(self.player.y)
+                self.net.send(packet)
 
-                    packet = 'IM' + str(self.player.x) + ' ' + str(self.player.y) + ' ' + self.name
-                    self.s.send_all(packet)
+                packet = 'IM' + str(self.player.x) + ' ' + str(self.player.y) + ' ' + self.name
+                self.s.send_all(packet)
 
     def close(self):
         self.c.close()
@@ -359,9 +365,6 @@ class client:
         self.connected = False
 
         self.last_move = 'AK0000'
-
-        self.x = 0
-        self.y = 0
 
         self.connect_thread = threading.Thread(target=self._connect)
         self.connect_thread.start()
@@ -419,20 +422,21 @@ class client:
                 self.recv_packet(p)
 
     def recv_packet(self, data):
+        # print(f"client received packet '{data}'")
         if data:
             if data[0] == 'A':
                 if data[1] == 'M':
                     split = data[2:].split(' ')
                     if len(split) == 2:
-                        x = self.x
-                        y = self.y
+                        x = self.players[self.name].x
+                        y = self.players[self.name].y
                         try:
-                            self.x = float(split[0])
-                            self.y = float(split[1])
+                            self.players[self.name].x = float(split[0])
+                            self.players[self.name].y = float(split[1])
                         except ValueError as error:
                             print(error)
-                            self.x = x  # reset position to before packet to not only update x in error
-                            self.y = y
+                            self.players[self.name].x = x  # reset position to before packet to not only update x in error
+                            self.players[self.name].y = y
                 elif data[1] == 'P':
                     split = data[2:].split(' ')
                     if len(split) == 3:
@@ -462,6 +466,9 @@ class client:
                     if name in self.players:
                         self.players[name].x = float(split[0])
                         self.players[name].y = float(split[1])
+                    elif name == self.world.game.player.name:
+                        self.world.game.player.x = float(split[0])
+                        self.world.game.player.y = float(split[1])
                     else:
                         print(f"player '{name}' moved but does not exist")
                 else:
@@ -480,7 +487,7 @@ class client:
             while not self.chunk_requests[(x, y)]:
                 time.sleep(.1)
                 t += 1
-                if t > 1000 and not self.chunk_requests[(x, y)]:
+                if t > 10 and not self.chunk_requests[(x, y)]:
                     print('chunk request timeout')
 
                     packet = 'IC' + str(x) + ' ' + str(y)
