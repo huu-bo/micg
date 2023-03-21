@@ -1,6 +1,9 @@
 # micg
 Mine and Craft game
 
+## Dev branch - indev (beta)
+
+This branch is made for current beta development. The game might not be stable to run on this version.
 
 created in python 3.7.13
 with pygame 2.1.2 (SDL 2.0.16)
