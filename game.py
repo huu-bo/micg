@@ -61,11 +61,10 @@ class Game:
         # TODO: put a lock on player because net.client updates player position while rendering
 
     def save_config(self):  # TODO: what is this newline usage
-
+        logger.log('Saving config')
         filename = self.configfile
 
         with open(filename, 'w') as file:
-
             data = {
                 "username": self.player.name
             }
@@ -73,10 +72,11 @@ class Game:
             json.dump(data, file)
 
     def load_config(self):
-
         filename = self.configfile
+        logger.log(f"loading log, filename: '{filename}'")
 
         if filename not in os.listdir('.'):
+            logger.log('\tno config, creating new')
             with open(filename, 'w') as file:
                 json.dump({
                     "username": "test"
@@ -84,6 +84,7 @@ class Game:
                 return
 
         with open(filename, "r") as file:
+            logger.log('\tloading config')
             data = json.load(file)
 
             self.player.name = str(data["username"])
