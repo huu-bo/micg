@@ -73,10 +73,10 @@ class Game:
 
     def load_config(self):
         filename = self.configfile
-        logger.log(f"loading log, filename: '{filename}'")
+        logger.log(f"Loading log, filename: '{filename}'")
 
         if filename not in os.listdir('.'):
-            logger.log('\tno config, creating new')
+            logger.log('\tNo config, creating new...')
             with open(filename, 'w') as file:
                 json.dump({
                     "username": "test"
