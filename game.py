@@ -60,7 +60,7 @@ class Game:
         # TODO: logging
         # TODO: put a lock on player because net.client updates player position while rendering
 
-    def save_config(self):  # TODO: what is this newline usage
+    def save_config(self):
         logger.log('Saving config')
         filename = self.configfile
 
@@ -76,7 +76,7 @@ class Game:
         logger.log(f"Loading log, filename: '{filename}'")
 
         if filename not in os.listdir('.'):
-            logger.log('\tNo config, creating new...')
+            logger.log('    No config, creating new...')
             with open(filename, 'w') as file:
                 json.dump({
                     "username": "test"
@@ -84,8 +84,15 @@ class Game:
                 return
 
         with open(filename, "r") as file:
-            logger.log('\tloading config')
-            data = json.load(file)
+            logger.log('    loading config')
+            try:
+                data = json.load(file)
+            except json.decoder.JSONDecodeError as e:
+                logger.log('config.json syntax error')
+                logger.log(str(e))
+                logger.log('config.json:')
+                file.seek(0)
+                logger.log("'" + str(file.read()) + "'")
 
             self.player.name = str(data["username"])
 
