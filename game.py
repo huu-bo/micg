@@ -37,7 +37,7 @@ class Game:
 
         self.players = {'self': net.player(False, self.blocks)}
         self.player = self.players['self']
-        self.player.name = 'test'
+        self.player.name = 'player'
 
         self.configfile = 'config.json'
 
@@ -62,10 +62,6 @@ class Game:
     def save_config(self):  # TODO: what is this newline usage
 
         filename = self.configfile
-
-        if filename not in os.listdir('.'):
-            with open(filename, 'w') as file:
-                json.dump({}, file)
 
         with open(filename, 'w') as file:
 
@@ -341,11 +337,11 @@ class Game:
         if text[0:1] == '/':
             self.command(text)
 
-            logger.log(f'[{self.player.name}] [command] ' + text)  # TODO: multiplayer players
+            logger.log(f'[COMMAND] <{self.player.name}> ' + text)  # TODO: multiplayer players
         else:
             self.chat_history.append(Chat(text, 'c', self.player.name))
 
-            logger.log(f'[{self.player.name}] [chat] ' + text)  # TODO: multiplayer players
+            logger.log(f'[CHAT] <{self.player.name}> ' + text)  # TODO: multiplayer players
 
     def info(self, text: str):
         self.chat_history.append(Chat(text, 'c', "[INFO]"))

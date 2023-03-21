@@ -25,4 +25,4 @@ while run:
 g.save_config()
 g.quit()
 pygame.quit()
-logger.log('game quit successfully')
+logger.log('Game quit successfully')
