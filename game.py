@@ -30,6 +30,7 @@ class Game:
         self.prompt = ''
         self.prompt_shown = False
         self.chat_history = []
+        self.previous_chats = []
 
         gen = noise.generator(0)
         self.world = noise.world(gen, self)
@@ -59,6 +60,7 @@ class Game:
         # TODO: draw multiplayer players
         # TODO: logging
         # TODO: put a lock on player because net.client updates player position while rendering
+        # TODO: world saving and loading
 
     def save_config(self):
         logger.log('Saving config')
@@ -86,7 +88,7 @@ class Game:
         with open(filename, "r") as file:
             logger.log('    loading config')
             try:
-                data = json.load(file)
+                data: dict = json.load(file)
             except json.decoder.JSONDecodeError as e:
                 logger.error('config.json syntax error')
                 logger.error(str(e))
@@ -94,10 +96,7 @@ class Game:
                 file.seek(0)
                 logger.error("'" + str(file.read()) + "'")
 
-            try:
-                self.player.name = str(data["username"])
-            except Exception as e:
-                logger.error(str(e))
+            self.player.name = str(data.setdefault('username', 'NO USERNAME'))
 
     def update(self) -> bool:
         """:returns a bool which is False when the game should quit"""
@@ -123,11 +122,8 @@ class Game:
                         if not self.prompt:
                             self.prompt_shown = False
                     elif event.key == pygame.K_UP:
-                        if len(self.chat_history) > 0:
-                            for c in self.chat_history:
-                                if c == self.chat_history[-1]:
-                                    self.prompt = c.message
-                                    # TODO: fix this code lol
+                        if len(self.previous_chats) > 0:
+                            self.prompt = self.previous_chats[-1]
                     else:
                         self.prompt += event.unicode
 
@@ -362,6 +358,8 @@ class Game:
         if text is None:
             text = self.prompt
 
+        self.previous_chats.append(text)
+
         # TODO: send to multiplayer other players
         if text[0:1] == '/':
             self.command(text)
@@ -520,12 +518,12 @@ class Game:
             if len(split) == 1:
                 try:
                     self.host()
-                except Exception as e:
+                except IOError as e:
                     self.error(str(e))
             elif len(split) == 1:
                 try:
                     self.host(split[1])
-                except Exception as e:
+                except IOError as e:
                     self.error(str(e))
             else:
                 self.error(f"Use host as '/host' or '/host ip' not '{command}'")

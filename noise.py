@@ -195,11 +195,14 @@ class world:
         if y < 40:
             if self.gen_new:
                 self.to_append += [self.get(value.x - 1, value.y), self.get(value.x, value.y - 1),
-                                   self.get(value.x + 1, value.y), self.get(value.x, value.y + 1), value]
+                                   self.get(value.x + 1, value.y), self.get(value.x, value.y + 1),
+
+                                   self.get(value.x + 1, value.y + 1), self.get(value.x + 1, value.y - 1),
+                                   self.get(value.x - 1, value.y + 1), self.get(value.x - 1, value.y - 1), value]
 
             if (x // 40, y // 40) in self.world:
                 self.world[(x // 40, y // 40)][y % 40][x % 40] = value
-                if self.server is not None and self.serving and update:  # TODO: chunk updates borkken (if online ofc.)
+                if self.server is not None and self.serving and update:
                     self.server.send_all('AP' + str(x) + ' ' + str(y) + ' ' + value.name)
                 elif self.server is not None and not self.serving and update:  # multiplayer client
                     self.server.set_block(x, y, value)

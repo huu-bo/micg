@@ -139,7 +139,7 @@ class block:
                 else:
                     self.support = 0
                 support = self.support
-                while world.get(self.x, self.y).solid and y > 1:
+                while world.get(self.x, y).solid and y < 39:
                     support += 1
                     world.get(self.x, y).support = support
                     y += 1
