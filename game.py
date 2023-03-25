@@ -2,14 +2,14 @@ import json
 import math
 import os
 import pygame
-
-import block
-import logger
 import net
 import noise
 
+import block
+import logger
 
-VERSION = 'Alpha 6'
+
+VERSION = 'Beta 1-pre'
 size = 20
 
 

@@ -169,7 +169,7 @@ class player:
             self.y += self.yv
 
     def die(self, keep_inventory):
-        if self.phy:
+        if self.phy and self.server is not None:
             self.server.net.send('AD')
 
         self.x = 0
