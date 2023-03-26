@@ -6,7 +6,26 @@ import math
 import time
 
 import block
+import logger
 import noise
+
+
+def info(*args):
+
+    message = ' '.join(args)
+    logger.logw(message, __name__)
+
+
+def warn(*args):
+
+    message = ' '.join(args)
+    logger.warnw(message, __name__)
+
+
+def err(*args):
+
+    message = ' '.join(args)
+    logger.errorw(message, __name__)
 
 
 class net:
@@ -100,7 +119,7 @@ class player:
         self.name = None
         self.selection = 'grass'
         if online and server is None:
-            print('player online and no connection?????')
+            warn('player online and no connection?????')
         self.server = server
         self.online = online
         self.phy = physics
@@ -225,10 +244,10 @@ class Server:
     def exit(self):
         self.run = False
         for t in self.threads:
-            print('joining', t)
+            info('Joining', t)
             t.join(1)
             if t.is_alive():
-                print(t, 'is still alive')
+                info(t, 'is still alive')
 
     def remove(self, s_c):
         self.players.remove(s_c.player)
@@ -262,23 +281,23 @@ class server_client:
     def packet_recv(self, packet: str):
         # data = packet.decode('utf-8')
         data = packet
-        print("client: '" + self.name + "' packet: '" + data + "'")
+        info("client: '" + self.name + "' packet: '" + data + "'")
         if data[0] == 'I':
             if data[1] == 'N':
                 had_name = self.name != 'NAME_NOT_SENT'
                 if ' ' not in data[2:]:
                     self.name = data[2:]
                 else:
-                    print('incorrect name', data[2:])
+                    err('incorrect name', data[2:])
                     if self.r:
                         self.net.send('EN')
                 if not had_name:
                     # let all the other clients that are not this client know that this client exists
                     self.s.send_all_except('IN' + self.name, self.pipe)
-                print(self.name, 'joined')
+                info(self.name, 'joined')
             elif data[1] == 'B':
                 split = data[2:].split(' ')
-                print('block info', split, 'deprecated')
+                warn('block info', split, 'deprecated')
                 if self.world is not None:
                     if len(split) == 2:
                         x = int(split[0])
@@ -297,7 +316,7 @@ class server_client:
                     # print('IC' + split[0] + ' ' + split[1] + ' ' + c[:50])
                     self.net.send('IC' + split[0] + ' ' + split[1] + ' ' + c)
             else:
-                print('unknown info packet:', data)
+                err('Unknown info packet:', data)
         elif data[0] == 'A':
             if data[1] == 'K':
                 for i in range(4):
@@ -318,9 +337,9 @@ class server_client:
             elif data[1] == 'Q':
                 self.close()
             else:
-                print('unknown action packet:', data)
+                err('Unknown action packet:', data)
         else:
-            print('unknown packet type:', data)
+            err('Unknown packet type:', data)
 
     def run(self):
         while self.r:
@@ -409,13 +428,13 @@ class client:
 
     def _connect(self):
         self.server.connect((self.ip, 60000))
-        print('connected')
+        info('Connected with', self.ip)
         self.connected = True
         self.net.send('IN' + self.name)
 
     def recv(self):
         while not self.connected:
-            print('waiting to connect')
+            info('Waiting to connect...')
             time.sleep(1)
         while self.connected:
             for p in self.net.recv(self.server.recv(1024)):
@@ -443,9 +462,9 @@ class client:
                         self.world.set(int(split[0]), int(split[1]), block.block(split[2], self.world.blocks),
                                        update=False)
                     else:
-                        print('incorrect packet')  # TODO: keep track of amount of incorrect packets
+                        err('Incorrect packet')  # TODO: keep track of amount of incorrect packets
                 else:
-                    print('incorrect action packet:', data)
+                    err('Incorrect action packet:', data)
 
             elif data[0] == 'I':
                 if data[1] == 'C':
@@ -457,9 +476,9 @@ class client:
                         p = player(True, self.world.blocks)
                         p.name = data[2:]
                         self.players[data[2:]] = p
-                        print(f'player {data[2:]} joined')
+                        info(f'Player {data[2:]} joined')
                     else:
-                        print(f'player {data[2:]} joined multiple times')  # TODO: let clients know about other clients disconnecting
+                        info(f'Player {data[2:]} joined multiple times')  # TODO: let clients know about other clients disconnecting
                 elif data[1] == 'M':
                     split = data[2:].split(' ')
                     name = split[2]
@@ -470,12 +489,12 @@ class client:
                         self.world.game.player.x = float(split[0])
                         self.world.game.player.y = float(split[1])
                     else:
-                        print(f"player '{name}' moved but does not exist")
+                        warn(f"Player '{name}' moved but does not exist")
                 else:
-                    print('incorrect information packet type:', data)
+                    err('Incorrect information packet type:', data)
 
             else:
-                print('incorrect packet type:', data)
+                err('Incorrect packet type:', data)
 
     def get_chunk(self, x, y):
         if (x, y) not in self.chunk_requests:
@@ -488,7 +507,7 @@ class client:
                 time.sleep(.1)
                 t += 1
                 if t > 10 and not self.chunk_requests[(x, y)]:
-                    print('chunk request timeout')
+                    warn('Chunk request timeout')
 
                     packet = 'IC' + str(x) + ' ' + str(y)
                     self.net.send(packet)
@@ -502,16 +521,16 @@ class client:
         self.net.send('AQ')
         self.connected = False
 
-        print('connecting connect_thread')
+        info('connecting connect_thread')
         self.connect_thread.join(1)
         if self.connect_thread.is_alive():
-            print('connect_thread is still alive')
+            warn('connect_thread is still alive')
         else:
-            print('connect_tread joined')
+            info('connect_tread joined')
 
         self.recv_thread.join(1)
         if self.recv_thread.is_alive():
-            print('recv_thread lives on')
+            info('recv_thread lives on')
 
         self.server.close()
 

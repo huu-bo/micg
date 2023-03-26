@@ -12,14 +12,9 @@ clock = pygame.time.Clock()
 run = True
 
 logger.resetLog()
-logger.log("Game Initialized")
+logger.logw("Game Initialized", __name__)
 
-try:
-    g.load_config()
-except Exception as e:
-    logger.log("Failed to load config! Error traceback: ")
-    logger.log(str(e))
-    pass
+g.load_config()
 
 while run:
     clock.tick(60)
@@ -27,13 +22,8 @@ while run:
     g.draw()
     pygame.display.update()
 
-try:
-    g.save_config()
-except Exception as e:
-    logger.log("Failed to save config! Error traceback: ")
-    logger.log(str(e))
-    pass
+g.save_config()
 
 g.quit()
 pygame.quit()
-logger.log('Game quit successfully')
+logger.logw('Game quit successfully', __name__)

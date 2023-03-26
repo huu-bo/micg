@@ -76,7 +76,7 @@ class Game:
         logger.log(f"Loading log, filename: '{filename}'")
 
         if filename not in os.listdir('.'):
-            logger.log('    No config, creating new...')
+            logger.warn('    No config, creating new...')
             with open(filename, 'w') as file:
                 json.dump({
                     "username": "test"
@@ -88,13 +88,16 @@ class Game:
             try:
                 data = json.load(file)
             except json.decoder.JSONDecodeError as e:
-                logger.log('config.json syntax error')
-                logger.log(str(e))
-                logger.log('config.json:')
+                logger.error('config.json syntax error')
+                logger.error(str(e))
+                logger.error('config.json:')
                 file.seek(0)
-                logger.log("'" + str(file.read()) + "'")
+                logger.error("'" + str(file.read()) + "'")
 
-            self.player.name = str(data["username"])
+            try:
+                self.player.name = str(data["username"])
+            except Exception as e:
+                logger.error(str(e))
 
     def update(self) -> bool:
         """:returns a bool which is False when the game should quit"""
@@ -363,19 +366,19 @@ class Game:
         if text[0:1] == '/':
             self.command(text)
 
-            logger.log(f'[COMMAND] <{self.player.name}> ' + text)  # TODO: multiplayer players
+            logger.logw(f'<{self.player.name}> ' + text, __name__ + "/command")  # TODO: multiplayer players
         else:
             self.chat_history.append(Chat(text, 'c', self.player.name))
 
-            logger.log(f'[CHAT] <{self.player.name}> ' + text)  # TODO: multiplayer players
+            logger.logw(f'<{self.player.name}> ' + text, __name__)  # TODO: multiplayer players
 
     def info(self, text: str):
         self.chat_history.append(Chat(text, 'c', "[INFO]"))
-        logger.log("[INFO] " + text)
+        logger.logw(text, __name__)
 
     def error(self, text: str):
         self.chat_history.append(Chat(text, 'e', self.player.name))
-        logger.log("[ERROR] " + text)
+        logger.errorw(text, __name__)
 
     def draw_chat(self):
         if self.prompt_shown:
@@ -515,11 +518,17 @@ class Game:
                 self.error(f"use join as '/join' or '/join ip' not '{command}'")
         elif split[0] == 'host':
             if len(split) == 1:
-                self.host()
+                try:
+                    self.host()
+                except Exception as e:
+                    self.error(str(e))
             elif len(split) == 1:
-                self.host(split[1])
+                try:
+                    self.host(split[1])
+                except Exception as e:
+                    self.error(str(e))
             else:
-                self.error(f"use host as '/host' or '/host ip' not '{command}'")
+                self.error(f"Use host as '/host' or '/host ip' not '{command}'")
 
         else:
             self.error('Unknown or improper command: ' + split[0])

@@ -3,6 +3,7 @@ import random
 import block
 import json
 
+import logger
 import net
 
 
@@ -113,7 +114,7 @@ class world:
             assert False, 'you did it wrong'
         if self.server is not None:
             if type(self.server) is not net.Server and type(self.server) is not net.client:
-                print(self.server)
+                logger.warnw(self.server, __name__)
                 raise ValueError('???????????????????')
 
     def gen_chunk(self, x, y):
@@ -302,7 +303,7 @@ class world:
                         self.gen.load(raw[i]['gen'])  # TODO: also load and save player position and inventory
                         # TODO: also load other players if multiplayer server
 
-                print('loaded')
+                logger.logw("loaded.", __name__)
 
     def serialize_chunk(self, x, y):
         out = ''
@@ -335,7 +336,7 @@ class world:
                 x = 0
                 y += 1
 
-        print('deserialised chunk', (int(split[0]), int(split[1])), 'size:', len(chunk[0]), len(chunk))
+        logger.warnw('deserialised chunk ' + split[0] + " " + split[1] + ' size: ' + str(len(chunk[0])) + " " + str(len(chunk)), __name__)
         self.world[(int(split[0]), int(split[1]))] = chunk
-        print(self.world[(int(split[0]), int(split[1]))][39][20].name)
-        print([c for c in self.world])
+        logger.log(self.world[(int(split[0]), int(split[1]))][39][20].name)
+        logger.log([c for c in self.world])
