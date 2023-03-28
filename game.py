@@ -510,7 +510,7 @@ class Game:
         elif split[0] == 'join':
             if len(split) == 1:
                 self.join()
-            elif len(split) == 1:
+            elif len(split) == 2:
                 self.join(split[1])
             else:
                 self.error(f"use join as '/join' or '/join ip' not '{command}'")
@@ -520,7 +520,7 @@ class Game:
                     self.host()
                 except IOError as e:
                     self.error(str(e))
-            elif len(split) == 1:
+            elif len(split) == 2:
                 try:
                     self.host(split[1])
                 except IOError as e:
