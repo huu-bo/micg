@@ -227,7 +227,7 @@ class Server:
         while self.run:
             try:
                 c, address = self.server.accept()
-                print('accepted', c, address)
+                info('Accepted', str(c), str(address))
                 p = player(True, self.world.blocks)
                 self.players.append(p)
                 pi = pipe()
@@ -244,10 +244,10 @@ class Server:
     def exit(self):
         self.run = False
         for t in self.threads:
-            info('Joining', t)
+            info('Joining', str(t))
             t.join(1)
             if t.is_alive():
-                info(t, 'is still alive')
+                info(str(t), 'is still alive')
 
     def remove(self, s_c):
         self.players.remove(s_c.player)
@@ -281,7 +281,7 @@ class server_client:
     def packet_recv(self, packet: str):
         # data = packet.decode('utf-8')
         data = packet
-        info("client: '" + self.name + "' packet: '" + data + "'")
+        # info("client: '" + self.name + "' packet: '" + data + "'")
         if data[0] == 'I':
             if data[1] == 'N':
                 had_name = self.name != 'NAME_NOT_SENT'

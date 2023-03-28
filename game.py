@@ -32,6 +32,8 @@ class Game:
         self.chat_history = []
         self.previous_chats = []
 
+        self.settings_gui_shown = False
+
         gen = noise.generator(0)
         self.world = noise.world(gen, self)
         self.blocks = self.world.blocks
@@ -361,6 +363,12 @@ class Game:
         self.previous_chats.append(text)
 
         # TODO: send to multiplayer other players
+
+        if self.player.name is None:
+            logger.warnw("The player name is null!!", __name__)
+            self.chat_history.append(Chat("Your player name is null!! (??)", 'e', 'ERROR'))
+            return
+
         if text[0:1] == '/':
             self.command(text)
 
@@ -370,13 +378,26 @@ class Game:
 
             logger.logw(f'<{self.player.name}> ' + text, __name__)  # TODO: multiplayer players
 
-    def info(self, text: str):
-        self.chat_history.append(Chat(text, 'c', "[INFO]"))
-        logger.logw(text, __name__)
+    def info(self, *args):
 
-    def error(self, text: str):
-        self.chat_history.append(Chat(text, 'e', self.player.name))
-        logger.errorw(text, __name__)
+        message = ' '.join(args)
+
+        self.chat_history.append(Chat(message, 'c', "[INFO]"))
+        logger.logw(message, __name__)
+
+    def warn(self, *args):
+
+        message = ' '.join(args)
+
+        self.chat_history.append(Chat(message, 'c', "[WARN]"))
+        logger.logw(message, __name__)
+
+    def error(self, *args):
+
+        message = ' '.join(args)
+
+        self.chat_history.append(Chat(message, 'e', self.player.name))
+        logger.errorw(message, __name__)
 
     def draw_chat(self):
         if self.prompt_shown:
@@ -400,7 +421,7 @@ class Game:
                 color = (255, 255, 255)
 
             if self.online:
-                self.screen.blit(self.font.render('[' + c.username + '] ' + c.message, True, color), (0, y))
+                self.screen.blit(self.font.render('<' + c.username + '> ' + c.message, True, color), (0, y))
             else:
                 self.screen.blit(self.font.render(c.message, True, color), (0, y))
 
@@ -501,11 +522,6 @@ class Game:
                     self.info("Changed gamerule " + split[1] + " to " + split[2])
                 else:
                     self.error('Not enough permissions to change gamerules!')
-
-        elif split[0] == 'saveconfig':
-            self.save_config()
-        elif split[0] == 'loadconfig':  # TODO: does it load config at startup?
-            self.load_config()
 
         elif split[0] == 'join':
             if len(split) == 1:
