@@ -32,6 +32,8 @@ class Game:
         self.chat_history = []
         self.previous_chats = []
 
+        self.settings_gui_shown = False
+
         gen = noise.generator(0)
         self.world = noise.world(gen, self)
         self.blocks = self.world.blocks
