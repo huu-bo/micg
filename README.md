@@ -12,4 +12,4 @@ python 3.* and pygame 2.* should be fine (no guarantees)
 
 Mine and Craft game is NOT related to any other sqaure games (e.g. Minesweeper, 2048, Super Mario Bros.)
 
-0n
+kv
