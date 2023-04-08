@@ -365,39 +365,39 @@ class Game:
         # TODO: send to multiplayer other players
 
         if self.player.name is None:
-            logger.warnw("The player name is null!!", __name__)
+            logger.warn("The player name is None!!")
             self.chat_history.append(Chat("Your player name is null!! (??)", 'e', 'ERROR'))
             return
 
         if text[0:1] == '/':
             self.command(text)
 
-            logger.logw(f'<{self.player.name}> ' + text, __name__ + "/command")  # TODO: multiplayer players
+            logger.log(f'<{self.player.name}> ' + text)  # TODO: multiplayer players
         else:
             self.chat_history.append(Chat(text, 'c', self.player.name))
 
-            logger.logw(f'<{self.player.name}> ' + text, __name__)  # TODO: multiplayer players
+            logger.log(f'<{self.player.name}> ' + text)  # TODO: multiplayer players
 
     def info(self, *args):
 
         message = ' '.join(args)
 
         self.chat_history.append(Chat(message, 'c', "[INFO]"))
-        logger.logw(message, __name__)
+        logger.log(message)
 
     def warn(self, *args):
 
         message = ' '.join(args)
 
         self.chat_history.append(Chat(message, 'c', "[WARN]"))
-        logger.logw(message, __name__)
+        logger.log(message)
 
     def error(self, *args):
 
         message = ' '.join(args)
 
         self.chat_history.append(Chat(message, 'e', self.player.name))
-        logger.errorw(message, __name__)
+        logger.error(message)
 
     def draw_chat(self):
         if self.prompt_shown:

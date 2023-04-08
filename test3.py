@@ -11,8 +11,8 @@ g = game.Game(screen)
 clock = pygame.time.Clock()
 run = True
 
-logger.resetLog()
-logger.logw("Game Initialized", __name__)
+logger.reset_log()
+logger.log("Game Initialized")
 
 g.load_config()
 
@@ -26,4 +26,4 @@ g.save_config()
 
 g.quit()
 pygame.quit()
-logger.logw('Game quit successfully', __name__)
+logger.log('Game quit successfully')

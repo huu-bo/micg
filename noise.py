@@ -6,23 +6,6 @@ import json
 import logger
 import net
 
-def info(*args):
-
-    message = ' '.join(args)
-    logger.logw(message, __name__)
-
-
-def warn(*args):
-
-    message = ' '.join(args)
-    logger.warnw(message, __name__)
-
-
-def err(*args):
-
-    message = ' '.join(args)
-    logger.errorw(message, __name__)
-
 
 class generator:
     def __init__(self, seed, floor=10):
@@ -323,7 +306,7 @@ class world:
                         self.gen.load(raw[i]['gen'])  # TODO: also load and save player position and inventory
                         # TODO: also load other players if multiplayer server
 
-                info('Loaded!')
+                logger.log('Loaded!')
 
     def serialize_chunk(self, x, y):
         out = ''
@@ -356,7 +339,9 @@ class world:
                 x = 0
                 y += 1
 
-        warn('deserialised chunk', str(int(split[0])), str(int(split[1])), 'size:', str(len(chunk[0])), str(len(chunk)))
+        logger.warn(f'deserialised chunk {int(split[0])} {int(split[1])}, size: {len(chunk[0])}, {len(chunk)}')
+
         self.world[(int(split[0]), int(split[1]))] = chunk
-        warn(self.world[(int(split[0]), int(split[1]))][39][20].name)
-        warn(str([c for c in self.world]))
+
+        # warn(self.world[(int(split[0]), int(split[1]))][39][20].name)
+        # warn(str([c for c in self.world]))
