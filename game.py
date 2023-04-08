@@ -34,7 +34,7 @@ class Game:
 
         self.settings_gui_shown = False
 
-        gen = noise.generator(0)
+        gen = noise.generator(0, floor=100)
         self.world = noise.world(gen, self)
         self.blocks = self.world.blocks
 
@@ -170,7 +170,7 @@ class Game:
                             self.player.inventory[self.player.selection] -= 1
 
         if self.server or not self.online:
-            self.world.update(self.gameRule.fastPhysics)
+            self.world.update(pygame.time.get_ticks())
         else:
             self.world.to_update = []
             self.world.to_append = []
@@ -578,8 +578,6 @@ class GameRule:
         self.creative = False  # allows infinite items
         self.allowFly = False  # disables movement checks
         self.keepInventory = False
-
-        self.fastPhysics = False
 
         # TODO: multiplayer permissions
         self.permissionChangeGamerule = True  # False: host, True: everyone

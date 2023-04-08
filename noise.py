@@ -209,22 +209,14 @@ class world:
             else:
                 self.get(x, y)  # load the chunk
 
-    def update(self, fast=False):
-        # print(self.to_update)
-        i = 0
-        while len(self.to_update) and (i < 100 or fast):
-            b = self.to_update[0]
-            if b.y is not None:
-                if b.y < 40:
-                    self.to_append += b.update(self)
-            self.to_update.pop(0)
+    def update(self, tick: int):
+        for b in self.to_update:
+            if b.last_update_tick != tick:
+                self.to_append += b.update(self)
+                b.last_update_tick = tick
 
-            i += 1
-        if not len(self.to_update):
-            for b in self.to_append:
-                if b not in self.to_update:
-                    self.to_update.append(b)
-            self.to_append = []
+        self.to_update = self.to_append
+        self.to_append = []
 
         # TODO: chunk unloading
 

@@ -21,6 +21,8 @@ class block:
 
         self.on_floor = False  # solid block under this block, only used if self.h_support
 
+        self.last_update_tick = 0
+
         if name in blocks:
             if 'solid' in blocks[name]:  # there has got to be a better way to do this
                 self.solid = blocks[name]['solid']
