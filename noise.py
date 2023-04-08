@@ -211,9 +211,11 @@ class world:
 
     def update(self, tick: int):
         for b in self.to_update:
-            if b.last_update_tick != tick:
-                self.to_append += b.update(self)
-                b.last_update_tick = tick
+            if b.y is not None:
+                if b.y < 40:
+                    if b.last_update_tick != tick:
+                        self.to_append += b.update(self)
+                        b.last_update_tick = tick
 
         self.to_update = self.to_append
         self.to_append = []
