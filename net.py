@@ -91,7 +91,7 @@ class net:
 class player:
     def __init__(self, online, blocks, server=None, physics=True):
         self.x = 0
-        self.y = 0
+        self.y = -70
         self.xv = 0
         self.yv = 0
 
@@ -174,7 +174,7 @@ class player:
             self.server.net.send('AD')
 
         self.x = 0
-        self.y = 0
+        self.y = -70
         self.xv = 0
         self.yv = 0
 
