@@ -170,6 +170,9 @@ class player:
             self.y += self.yv
 
     def die(self, keep_inventory):
+
+        logger.log(f"Player {self.name} died at {self.x}, {self.y}")
+
         if self.phy and self.online:
             self.server.net.send('AD')
 
