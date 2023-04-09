@@ -118,7 +118,7 @@ def trace(colors: bool) -> str:
             else:
                 if colors:
                     trace_string_formatted2 += '\33[94m'
-                trace_string_formatted2 += filename.split('/')[-1]  # TODO: windows \ directories?
+                trace_string_formatted2 += os.path.basename(filename)
                 filename = ''
                 state = 2
 
