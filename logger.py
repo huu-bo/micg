@@ -144,10 +144,12 @@ def trace(colors: bool) -> str:
             line = ''
         elif state == 4:
             if trace_string_formatted[i] == ';':  # TODO: you can't have a semicolon in the python
+                trace_string_formatted2 += ';'
                 state = 0
 
         i += 1
-    trace_string_formatted2 = trace_string_formatted2[:-2]
+    trace_string_formatted2 = ''.join(trace_string_formatted2.split(';')[:-3])  # remove this function and log function
+    trace_string_formatted2 = trace_string_formatted2[:-2]  # remove the last ', '
     # print(trace_string_formatted)
     # print(trace_string_formatted2)
     return trace_string_formatted2
