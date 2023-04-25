@@ -1,5 +1,6 @@
 import os
 import json
+import random
 
 
 def load(directory='blocks/'):
@@ -90,6 +91,20 @@ class block:
 
             if not self.on_floor and self.h_support:
                 self.support += 1
+
+        if self.max_support == -2:
+            options = []
+            if not world.get(self.x + 1, self.y).solid:
+                options.append(1)
+            if not world.get(self.x - 1, self.y).solid:
+                options.append(-1)
+
+            if len(options) > 0:
+                direction = random.choice(options)
+                world.set(self.x, self.y, block('air', self.blocks))
+                self.x += direction
+                world.set(self.x, self.y, self)
+                moved = True
 
         if (not world.get(self.x, self.y + 1).solid) and\
                 ((not world.get(self.x - 1, self.y).solid) and (not world.get(self.x + 1, self.y).solid) or not self.h_support):
