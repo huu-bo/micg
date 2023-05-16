@@ -112,6 +112,7 @@ class block:
             self.y += 1
             world.set(self.x, self.y, self)
             moved = True
+            self.support = 0
         else:
             if world.get(self.x, self.y - 1).solid:
                 if self.support != world.get(self.x, self.y - 1).support + 1:
@@ -127,32 +128,35 @@ class block:
                 if self.support != world.get(self.x - 1, self.y).support + 1:
                     moved = True
                 self.support = world.get(self.x - 1, self.y).support + 1
+                if world.get(self.x + 1, self.y).solid:
+                    self.support = max(self.support, world.get(self.x + 1, self.y).support)
 
             else:
                 if self.support != 0:
                     moved = True
                 self.support = 0
 
-            if self.support > self.max_support:
-                if not world.get(self.x + 1, self.y + 1).solid:
-                    world.set(self.x, self.y, block('air', self.blocks))
-                    self.y += 1
-                    self.x += 1
-                    world.set(self.x, self.y, self)
-                    moved = True
-                elif not world.get(self.x - 1, self.y + 1).solid:
-                    world.set(self.x, self.y, block('air', self.blocks))
-                    self.y += 1
-                    self.x -= 1
-                    world.set(self.x, self.y, self)
-                    moved = True
+        if self.support > self.max_support and world.get(self.x, self.y + 1).solid:
+            options = []
+            if not world.get(self.x + 1, self.y + 1).solid:
+                options.append(1)
+            if not world.get(self.x - 1, self.y + 1).solid:
+                options.append(-1)
+
+            if options:
+                world.set(self.x, self.y, block('air', self.blocks))
+                self.y += 1
+                self.x += random.choice(options)
+                world.set(self.x, self.y, self)
+                moved = True
 
         if moved:
             if self.solid:
                 assert self.name != 'air', 'wtf'
                 y = self.y + 1
                 if world.get(self.x, self.y - 1).solid:
-                    self.support = world.get(self.x, self.y - 1).support + 1
+                    if not self.h_support:
+                        self.support = world.get(self.x, self.y - 1).support + 1
                 else:
                     self.support = 0
                 support = self.support
