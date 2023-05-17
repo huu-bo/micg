@@ -207,7 +207,7 @@ class Game:
 
         # draw player
         pygame.draw.rect(screen, (255, 255, 0),
-                         (size * 20, size * 20 - 2, size, size))  # TODO: 2 is a random number, it only works on scale 20
+                         (size * 20, size * 20, size, size))
 
         # draw online players
         if self.online and self.server:
