@@ -6,64 +6,73 @@ import io
 import traceback
 
 
+def _log(message, colors, t):  # TODO: american english VS british english
+    if t not in [0, 1, 2]:
+        raise ValueError('unknown logger._log type')
+
+    out = ''
+    if colors:
+        out += '\33[34m'
+    out += '['
+    out += (strftime('%H:%M:%S', gmtime()) + ' / ' + str(pygame.time.get_ticks())).ljust(19, ' ')
+    out += '] '
+
+    if t == 0:
+        if colors:
+            out += '\033[32m'
+        out += '[INFO] '
+    elif t == 1:
+        if colors:
+            out += '\033[33m'
+        out += '[WARN] '
+    elif t == 2:
+        if colors:
+            out += '\033[31m'
+        out += '[ERROR]'
+
+    if colors:
+        out += '\033[0m'
+    out += ' '
+
+    if colors:
+        "\33[36m"
+    out += '('
+    out += trace(colors, -4)
+    if colors:
+        '\33[36m'
+    out += ')'
+    if colors:
+        out += '\33[0m'
+    out += ' '  # TODO: (how) should they all be aligned
+
+    if colors and t == 2:
+        out += '\33[31m'
+    out += str(message)
+    if colors and t == 2:
+        out += '\33[0m'
+
+    return out
+
+
 def log(message):
-    print("\033[34m[" +
-          strftime("%H:%M:%S", gmtime()) +
-          " / " + str(pygame.time.get_ticks())
-          + "] \033[32m[INFO]\033[0m "
-          + "\33[36m(" + trace(True) + "\33[36m)\33[0m "
-          + str(message))
+    print(_log(message, True, 0))
 
     with open('latest.log', 'a', encoding="UTF-8") as f:
-        f.write("["
-                + strftime("%H:%M:%S", gmtime())
-                + " / "
-                + str(pygame.time.get_ticks())
-                + "] [INFO] "
-                + "(" + trace(False) + ") "
-                + str(message)
-                + "\n")
+        f.write(_log(message, False, 0) + '\n')
 
 
 def warn(message):
-    print("\033[34m["
-          + strftime("%H:%M:%S", gmtime())
-          + " / "
-          + str(pygame.time.get_ticks())
-          + "] \033[33m[WARN]\033[0m "
-          + "\33[36m(" + trace(True) + "\33[36m) \33[0m"
-          + str(message))
+    print(_log(message, True, 1))
 
     with open('latest.log', 'a', encoding="UTF-8") as f:
-        f.write("["
-                + strftime("%H:%M:%S", gmtime())
-                + " / "
-                + str(pygame.time.get_ticks())
-                + "] [WARN] "
-                + "(" + trace(False) + ") "
-                + str(message)
-                + "\n")
+        f.write(_log(message, False, 1) + "\n")
 
 
 def error(message):
-    print("\033[34m["
-          + strftime("%H:%M:%S", gmtime())
-          + " / "
-          + str(pygame.time.get_ticks())
-          + "] \033[31m[ERROR] "
-          + "\33[36m(" + trace(True) + "\33[36m) \33[31m"
-          + str(message)
-          + "\033[0m")
+    print(_log(message, True, 2))
 
     with open('latest.log', 'a', encoding="UTF-8") as f:
-        f.write("["
-                + strftime("%H:%M:%S", gmtime())
-                + " / "
-                + str(pygame.time.get_ticks())
-                + "] [ERROR] "
-                + "(" + trace(False) + ") "
-                + str(message)
-                + "\n")
+        f.write(_log(message, False, 2) + "\n")
 
 
 def reset_log():
@@ -72,11 +81,11 @@ def reset_log():
             f.write("")
             return
 
-    with open("latest.log", "w", encoding="UTF-8") as f2:
-        f2.truncate()
+    with open("latest.log", "w", encoding="UTF-8") as f:
+        f.truncate()
 
 
-def trace(colors: bool) -> str:
+def trace(colors: bool, remove: int = -3) -> str:
     trace = io.StringIO()
     traceback.print_stack(file=trace)
     trace_string = trace.getvalue()
@@ -148,7 +157,7 @@ def trace(colors: bool) -> str:
                 state = 0
 
         i += 1
-    trace_string_formatted2 = ''.join(trace_string_formatted2.split(';')[:-3])  # remove this function and log function
+    trace_string_formatted2 = ''.join(trace_string_formatted2.split(';')[:remove])  # remove this function and log function
     trace_string_formatted2 = trace_string_formatted2[:-2]  # remove the last ', '
     # print(trace_string_formatted)
     # print(trace_string_formatted2)
