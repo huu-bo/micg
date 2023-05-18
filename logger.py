@@ -75,6 +75,15 @@ def error(message):
         f.write(_log(message, False, 2) + "\n")
 
 
+def exception(message, e):
+    string = ''.join(traceback.format_exception(e, e, e.__traceback__))
+    string = ''.join(['    ' + line + '\n' for line in string.split('\n')])[:-6]
+    print(_log('Exception occurred ' + message, True, 2) + '\n' + string)
+
+    with open('latest.log', 'a', encoding="UTF-8") as f:
+        f.write(_log('Exception occurred ' + message, False, 2) + "\n" + string + '\n')
+
+
 def reset_log():
     if "latest.log" not in os.listdir('.'):
         with open("latest.log", 'w', encoding="UTF-8") as f:
