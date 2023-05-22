@@ -14,7 +14,7 @@ def _log(message, colors, t):  # TODO: american english VS british english
     if colors:
         out += '\33[34m'
     out += '['
-    out += (datetime.now().strftime("%H:%M:%S.%f")[:-3] + ' / ' + str(pygame.time.get_ticks())).ljust(19, ' ')
+    out += (datetime.now().strftime("%H:%M:%S.%f")[:-4] + ' / ' + str(pygame.time.get_ticks())).ljust(19, ' ')
     out += '] '
 
     if t == 0:

@@ -522,7 +522,8 @@ class Game:
                     self.info("Changed gamerule " + split[1] + " to " + split[2])
                 else:
                     self.error('Not enough permissions to change gamerules!')
-
+        elif split[0] == 'kill':
+            self.player.die(self.gameRule.keepInventory)
         elif split[0] == 'join':
             if len(split) == 1:
                 self.join()
