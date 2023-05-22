@@ -245,6 +245,7 @@ class world:
             # for c in self.world:
             #     if c not in w2:
             #         w2[c] = self.world[c]
+
             with open('saves/' + self.filename, 'w') as file:
                 w3 = {}
                 for i in self.world:

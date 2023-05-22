@@ -1,14 +1,12 @@
+from datetime import datetime
 import pygame
 import os
-from time import gmtime, strftime
-
 import io
 import traceback
 
-
 def log(message):
     print("\033[34m[" +
-          strftime("%H:%M:%S", gmtime()) +
+          datetime.utcnow().strftime("%H:%M:%S.%f")[:-3] +
           " / " + str(pygame.time.get_ticks())
           + "] \033[32m[INFO]\033[0m "
           + "\33[36m(" + trace(True) + "\33[36m)\33[0m "
@@ -16,7 +14,7 @@ def log(message):
 
     with open('latest.log', 'a', encoding="UTF-8") as f:
         f.write("["
-                + strftime("%H:%M:%S", gmtime())
+                + datetime.utcnow().strftime("%H:%M:%S.%f")[:-3]
                 + " / "
                 + str(pygame.time.get_ticks())
                 + "] [INFO] "
@@ -27,7 +25,7 @@ def log(message):
 
 def warn(message):
     print("\033[34m["
-          + strftime("%H:%M:%S", gmtime())
+          + datetime.utcnow().strftime("%H:%M:%S.%f")[:-3]
           + " / "
           + str(pygame.time.get_ticks())
           + "] \033[33m[WARN]\033[0m "
@@ -36,7 +34,7 @@ def warn(message):
 
     with open('latest.log', 'a', encoding="UTF-8") as f:
         f.write("["
-                + strftime("%H:%M:%S", gmtime())
+                + datetime.utcnow().strftime("%H:%M:%S.%f")[:-3]
                 + " / "
                 + str(pygame.time.get_ticks())
                 + "] [WARN] "
@@ -47,7 +45,7 @@ def warn(message):
 
 def error(message):
     print("\033[34m["
-          + strftime("%H:%M:%S", gmtime())
+          + datetime.utcnow().strftime("%H:%M:%S.%f")[:-3]
           + " / "
           + str(pygame.time.get_ticks())
           + "] \033[31m[ERROR] "
@@ -57,7 +55,7 @@ def error(message):
 
     with open('latest.log', 'a', encoding="UTF-8") as f:
         f.write("["
-                + strftime("%H:%M:%S", gmtime())
+                + datetime.utcnow().strftime("%H:%M:%S.%f")[:-3]
                 + " / "
                 + str(pygame.time.get_ticks())
                 + "] [ERROR] "
@@ -109,6 +107,7 @@ def trace(colors: bool) -> str:
     i = 0
     while i < len(trace_string_formatted):
         c = trace_string_formatted[i]
+
         if state == 0:
             if c == '"':
                 state = 1
@@ -117,15 +116,18 @@ def trace(colors: bool) -> str:
                 filename += c
             else:
                 if colors:
-                    trace_string_formatted2 += '\33[94m'
+                    trace_string_formatted2 += '\33[36m'
                 trace_string_formatted2 += os.path.basename(filename)
                 filename = ''
                 state = 2
 
         elif state == 2:
+
             j = i + 7
+
             while j < len(trace_string_formatted) and trace_string_formatted[j] != ',':
                 line += trace_string_formatted[j]
+
                 j += 1
             state = 3
             i = j
@@ -138,16 +140,16 @@ def trace(colors: bool) -> str:
                 j += 1
             state = 4
 
-            if colors:
-                trace_string_formatted2 += '\33[0m'
-            trace_string_formatted2 += f':{func}:{line}, '
+            trace_string_formatted2 += f'/{func}:{line}, '
             line = ''
         elif state == 4:
             if trace_string_formatted[i] == ';':  # TODO: you can't have a semicolon in the python
                 state = 0
 
         i += 1
-    trace_string_formatted2 = trace_string_formatted2[:-2]
-    # print(trace_string_formatted)
-    # print(trace_string_formatted2)
-    return trace_string_formatted2
+
+    lt = trace_string_formatted2[:-2].split(", ")
+
+    trace_string_formatted3 = str(lt[-3]).replace('.py', '')
+
+    return trace_string_formatted3
