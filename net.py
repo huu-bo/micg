@@ -128,6 +128,9 @@ class player:
             floor = False
             hit = False
 
+            self.yv += .1
+            self.y += self.yv
+
             while world.get(math.floor(self.x), math.floor(self.y) - 1).solid or \
                     world.get(math.ceil(self.x), math.floor(self.y) - 1).solid:
                 self.yv = 0
@@ -165,9 +168,6 @@ class player:
                     self.x = round(self.x)
 
             self.xv /= 2
-
-            self.yv += .1
-            self.y += self.yv
 
     def die(self, keep_inventory):
 
