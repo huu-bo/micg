@@ -14,6 +14,7 @@ def _log(message, colors, t):  # TODO: american english VS british english
     if colors:
         out += '\33[34m'
     out += '['
+    # TODO: isn't %f redundant because of the pygame.ticks()?
     out += (datetime.now().strftime("%H:%M:%S.%f")[:-4] + ' / ' + str(pygame.time.get_ticks())).ljust(19, ' ')
     out += '] '
 

@@ -222,86 +222,56 @@ class world:
 
         # TODO: chunk unloading
 
-    def save(self, file: str = None):
-        if 'saves' not in os.listdir('./'):
-            os.mkdir('saves')
-
-        if file is not None:
-            self.filename = file
-
-        if self.filename is not None:
-            if self.filename not in os.listdir('saves'):
-                with open('saves/' + self.filename, 'w') as file:
-                    json.dump({}, file)
-
-            # with open('saves/' + self.filename, 'r') as file:
-            #     w = json.load(file)
-            # w2 = {}
-            # for c in w:
-            #     if c not in self.world:
-            #         w2[c] = w[c]
-            #     else:
-            #         w2[c] = self.world[c]
-            # for c in self.world:
-            #     if c not in w2:
-            #         w2[c] = self.world[c]
-
-            with open('saves/' + self.filename, 'w') as file:
-                w3 = {}
-                for i in self.world:
-                    c = []
-                    for j in self.world[i]:
-                        row = []
-                        for b in j:
-                            if type(b) != block.block:
-                                # print('error:', b)
-                                row.append({'name': 'air', 'support': 0})
-                            else:
-                                row.append({'name': b.name, 'support': b.support})
-                        c.append(row)
-                    w3[str(i[0]) + ' ' + str(i[1])] = c
-
-                w3['data'] = {}
-                w3['data']['gen'] = self.gen.save()
-
-                json.dump(w3, file)
-
-    def load(self, file: str = None):
-        if file is not None:
-            self.filename = file
-
-        if self.filename is not None:
-            with open('saves/' + self.filename, 'r') as file:
-                raw = json.load(file)
-
-                self.world = {}
-                for i in raw:
-                    if i != 'data':
-                        c = []
-                        y = int(i.split(' ')[1]) * 40
-                        for j in raw[i]:
-                            row = []
-                            x = int(i.split(' ')[0]) * 40
-                            for ib in j:
-                                b = block.block(ib['name'], self.blocks)
-                                b.support = ib['support']
-
-                                b.x = x
-                                b.y = y
-
-                                b.on_floor = True
-
-                                row.append(b)
-                                x += 1
-                            y += 1
-                            c.append(row)
-                        # print(i)
-                        self.world[(int(i.split(' ')[0]), int(i.split(' ')[1]))] = c
+    def save(self):
+        w = {}
+        for i in self.world:
+            c = []
+            for j in self.world[i]:
+                row = []
+                for b in j:
+                    if type(b) != block.block:
+                        logger.warn(f"block {b} in chunk {i[0]}, {i[1]} is not a Block")
+                        # print('error:', b)
+                        row.append({'name': 'air', 'support': 0})
                     else:
-                        self.gen.load(raw[i]['gen'])  # TODO: also load and save player position and inventory
-                        # TODO: also load other players if multiplayer server
+                        row.append({'name': b.name, 'support': b.support})
+                c.append(row)
+            w[str(i[0]) + ' ' + str(i[1])] = c
 
-                logger.log('Loaded!')
+        w['data'] = {}
+        w['data']['gen'] = self.gen.save()
+
+        return w
+
+    def load(self, raw: dict):
+        self.world = {}
+        for i in raw:
+            if i != 'data':
+                c = []
+                y = int(i.split(' ')[1]) * 40
+                for j in raw[i]:
+                    row = []
+                    x = int(i.split(' ')[0]) * 40
+                    for ib in j:
+                        b = block.block(ib['name'], self.blocks)
+                        b.support = ib['support']
+
+                        b.x = x
+                        b.y = y
+
+                        b.on_floor = True
+
+                        row.append(b)
+                        x += 1
+                    y += 1
+                    c.append(row)
+                # print(i)
+                self.world[(int(i.split(' ')[0]), int(i.split(' ')[1]))] = c
+            else:
+                self.gen.load(raw[i]['gen'])  # TODO: also load and save player position and inventory
+                # TODO: also load other players if multiplayer server
+
+        logger.log('Loaded!')
 
     def serialize_chunk(self, x, y):
         out = ''

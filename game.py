@@ -9,6 +9,19 @@ import block
 import logger
 
 
+# VERSION syntax:
+#     M N
+#     M N-pre
+#     N
+#     N-M
+#     N-pre
+
+#  where N is:
+#    a number
+#    N.N.N  # three numbers separated by dots
+# where M is the full name of a greek letter starting with a capital letter
+#    e.g. 'Alpha' 'Beta'
+
 VERSION = 'Beta 1-pre'
 size = 20
 
@@ -545,6 +558,17 @@ class Game:
             else:
                 self.error(f"Use host as '/host' or '/host ip' not '{command}'")
 
+        elif split[0] == 'save':
+            if len(split) != 2:
+                self.error(f"'{command}', '{split}' incorrect syntax, expected save name")
+            else:
+                self.save(split[1])
+        elif split[0] == 'load':
+            if len(split) != 2:
+                self.error(f"'{command}', '{split}' incorrect syntax, expected save name")
+            else:
+                self.load(split[1])
+
         else:
             self.error('Unknown or improper command: ' + split[0])
 
@@ -568,6 +592,44 @@ class Game:
 
         self.online = True
         self.server = True
+
+    def save(self, filename: str):
+        if 'saves' not in os.listdir('./'):
+            os.mkdir('saves')
+
+        save = {
+            'world': self.world.save(),
+            'version': VERSION
+            # TODO: save gamerules and players
+        }
+        with open('./saves/' + filename + '.json', 'w') as file:
+            json.dump(save, file)
+
+    def load(self, filename: str):
+        logger.log(f"loading world '{filename}'")
+
+        if 'saves' not in os.listdir('./'):
+            self.error('no saves folder')
+            return
+
+        if filename + '.json' not in os.listdir('./saves/'):
+            self.error(f"world {filename} does not exist")
+            return
+
+        try:
+            with open('./saves/' + filename + '.json', 'r') as file:
+                save = json.load(file)
+        except json.JSONDecodeError:
+            self.error('corrupt save file')
+
+        if 'version' in save:  # TODO: parse and check version number
+            logger.log('Beta world')
+            self.world.load(save['world'])  # TODO: load player
+        else:  # Alpha saves
+            logger.log('Alpha world')
+            self.world.load(save)
+            self.player.x = 20
+            self.player.y = 20
 
     def quit(self):
         if self.connection is not None:
