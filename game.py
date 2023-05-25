@@ -587,6 +587,14 @@ class Game:
             else:
                 self.load(split[1])
 
+        elif split[0] == 'temp':
+            x = self.player.x // 20
+            y = self.player.y // 20
+
+            temp = self.world.temperature_gen.gen(x) + y
+
+            self.chat(str(temp))
+
         else:
             self.error('Unknown or improper command: ' + split[0])
 

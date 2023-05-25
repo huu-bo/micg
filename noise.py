@@ -93,6 +93,7 @@ class generator:
 class world:
     def __init__(self, gen: generator, game, gen_new=True, server=None, serving=False):
         self.gen = gen
+        self.temperature_gen = generator(0, 20, (-50, 50))
         self.world = {}
 
         self.game = game
@@ -134,23 +135,58 @@ class world:
             c.append(line)
 
         if y <= 0:
+            temperature = self.temperature_gen.gen(x) + y
+            print(temperature)
+
             for i in range(40):
                 height = self.gen.gen(i + x * 40) + y * 40
                 for dy in range(min(height, 40)):
+                    if temperature > 40:
+                        bn = 'sand'
+                    elif temperature > 30:
+                        bn = 'dirt'
+                    elif temperature > 3:
+                        bn = 'grass'
+                    elif temperature > 0:
+                        bn = 'dirt'
+                    else:
+                        bn = 'ice'
+
                     if dy == 0 and y == 0:
                         b = block.block('bedrock', self.blocks)
 
                     elif dy == height - 1:
-                        b = block.block('grass', self.blocks)
+                        b = block.block(bn, self.blocks)
                     elif dy == height - 2:
-                        b = block.block('grass', self.blocks)
+                        b = block.block(bn, self.blocks)
 
                     elif dy == height - 3:
-                        b = block.block('dirt', self.blocks)
+                        if temperature > 41:
+                            bn = 'sand'
+                        elif temperature > -10:
+                            bn = 'dirt'
+                        else:
+                            bn = 'ice'
+
+                        b = block.block(bn, self.blocks)
                     elif dy == height - 4:
-                        b = block.block('dirt', self.blocks)
+                        if temperature > 41:
+                            bn = 'sand'
+                        elif temperature > -20:
+                            bn = 'dirt'
+                        else:
+                            bn = 'ice'
+
+                        b = block.block(bn, self.blocks)
                     elif dy == height - 5:
-                        b = block.block('dirt', self.blocks)
+                        if temperature > 41:
+                            bn = 'sand'
+                        elif temperature > -30:
+                            bn = 'dirt'
+                        else:
+                            bn = 'ice'
+
+                        b = block.block(bn, self.blocks)
 
                     else:
                         if height - dy - 1 > 100 and random.random() > max(.99, 1 - (height - dy - 101) / 10):
