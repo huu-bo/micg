@@ -5,10 +5,60 @@ import logger
 import net
 
 
+class Random:
+    m = 4294967296
+    a = 1664525
+    c = 1
+
+    def __init__(self, seed: int):
+        self.values = {
+            -1: self._gen(seed + 1),
+            0: seed,
+            1: self._gen(seed)
+        }
+
+        self.min_gen = -1
+        self.max_gen = 1
+
+    def gen(self, i: int) -> float:
+        if i in self.values:
+            return self.values[i] / self.m
+        else:
+            if i > self.max_gen:
+                for j in range(self.max_gen, i+2):
+                    self.values[j+1] = self._gen(self.values[j])
+            else:
+                # print('less', self.min_gen, i-2, list(range(self.min_gen, i-2)))
+                j = self.min_gen
+                while j != i-2:
+                    self.values[j-1] = self._gen(self.values[j])
+                    j -= 1
+
+            return self.values[i] / self.m
+
+    def _gen(self, seed):
+        seed = (self.a * seed + self.c) % self.m
+        return seed
+
+    def save(self):
+        return {
+            'values': self.values,
+            'min': self.min_gen,
+            'max': self.max_gen
+        }
+
+    def load(self, raw: dict):
+        self.values = raw['values']
+        self.min_gen = raw['min']
+        self.max_gen = raw['max']
+
+
 class generator:
     def __init__(self, seed, floor=10, clamp=None):
         self.seed = seed  # unused
         self.clamp = clamp
+
+        self.generator = Random(self.seed)
 
         # holes in the floor are a feature
 
@@ -43,12 +93,12 @@ class generator:
             return self.generated[i]
         else:
             if i == self.min_gen - 1:
-                self.min_gen_slope = min(max(-1, self.min_gen_slope + int(random.random() * 3) - 1), 1)
+                self.min_gen_slope = min(max(-1, self.min_gen_slope + int(self.generator.gen(i) * 3) - 1), 1)
                 self.min_gen_value += self.min_gen_slope
                 self.generated[i] = self.min_gen_value
                 self.min_gen = i
             elif i == self.max_gen + 1:
-                self.max_gen_slope = min(max(-1, self.max_gen_slope + int(random.random() * 3) - 1), 1)
+                self.max_gen_slope = min(max(-1, self.max_gen_slope + int(self.generator.gen(i) * 3) - 1), 1)
                 self.max_gen_value += self.max_gen_slope
                 self.generated[i] = self.max_gen_value
                 self.max_gen = i
@@ -74,6 +124,8 @@ class generator:
         self.max_gen_value = raw['max_gen_value']
         self.max_gen_slope = raw['max_gen_slope']
 
+        self.generator.load(raw['generator'])
+
     def save(self):
         return {
             'seed': self.seed,
@@ -87,6 +139,8 @@ class generator:
             'max_gen': self.max_gen,
             'max_gen_value': self.max_gen_value,
             'max_gen_slope': self.max_gen_slope,
+
+            'generator': self.generator.save()
         }
 
 

@@ -47,7 +47,7 @@ class Game:
 
         self.settings_gui_shown = False
 
-        gen = noise.generator(0, floor=100)
+        gen = noise.generator(3, floor=100)  # TODO: base seed on time
         self.world = noise.world(gen, self)
         self.blocks = self.world.blocks
 
