@@ -591,9 +591,19 @@ class Game:
             x = self.player.x // 20
             y = self.player.y // 20
 
-            temp = self.world.temperature_gen.gen(x) + y
+            temp = self.world.temperature_gen.gen(int(x)) + int(y)
 
             self.chat(str(temp))
+
+        elif _command(split, 'tp int int'):
+            self.player.x = int(split[1])
+            self.player.y = int(split[2])
+
+        elif split[0] == 'x':
+            try:
+                self.chat(repr(eval(''.join(split[1:]))))
+            except Exception as e:
+                self.error(str(e))
 
         else:
             self.error('Unknown or improper command: ' + split[0])

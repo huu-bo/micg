@@ -136,7 +136,6 @@ class world:
 
         if y <= 0:
             temperature = self.temperature_gen.gen(x) + y
-            print(temperature)
 
             for i in range(40):
                 height = self.gen.gen(i + x * 40) + y * 40
@@ -170,7 +169,7 @@ class world:
 
                         b = block.block(bn, self.blocks)
                     elif dy == height - 4:
-                        if temperature > 41:
+                        if temperature > 42:
                             bn = 'sand'
                         elif temperature > -20:
                             bn = 'dirt'
@@ -179,7 +178,7 @@ class world:
 
                         b = block.block(bn, self.blocks)
                     elif dy == height - 5:
-                        if temperature > 41:
+                        if temperature > 43:
                             bn = 'sand'
                         elif temperature > -30:
                             bn = 'dirt'
@@ -203,6 +202,12 @@ class world:
                     b.on_floor = True
 
                     c[39 - dy][i % 40] = b
+
+            for i in range(40):
+                if y * 40 == -800:
+                    if c[0][i % 40].name == 'air':
+                        if (i % 10 < 5) * (i % 11 < 7) * (i % 12 < 8):
+                            c[0][i % 40] = block.block('cloud', self.blocks)
 
         self.world[(x, y)] = c
 
