@@ -1,4 +1,5 @@
 import random
+import math
 import block
 
 import logger
@@ -55,7 +56,7 @@ class Random:
 
 class generator:
     def __init__(self, seed, floor=10, clamp=None):
-        self.seed = seed  # unused
+        self.seed = seed
         self.clamp = clamp
 
         self.generator = Random(self.seed)
@@ -144,9 +145,48 @@ class generator:
         }
 
 
+class Perlin_generator:
+    def __init__(self, seed, scale):
+        self.scale = scale
+
+        generator = Random(seed)
+
+        small_seed = generator._gen(seed + 2)
+        self.small_generator = Random(small_seed)
+
+        big_seed = generator._gen(seed + 4)
+        self.big_generator = Random(big_seed)
+
+    def gen(self, i):
+        x = i // self.scale
+
+        #  + self.big_generator.gen((x + 1) // self.scale) * self.scale * self.scale
+
+        a = (i - x * self.scale) / self.scale
+        out = self._interp(
+            self.small_generator.gen(x) * self.scale,
+            self.small_generator.gen(x + 1) * self.scale,
+            a
+        )
+
+        i = i / self.scale
+        x = i // self.scale
+        a = (i - x * self.scale) / self.scale
+        out += self._interp(
+            self.big_generator.gen(x) * self.scale,
+            self.big_generator.gen(x + 1) * self.scale,
+            a
+        ) * self.scale
+        return round(out)
+
+    def _interp(self, a, b, x):
+        mu = math.cos(x * math.pi) / 2 + .5
+        return a * mu + b * (1 - mu)
+
+
 class world:
     def __init__(self, gen: generator, game, gen_new=True, server=None, serving=False):
-        self.gen = gen
+        self.gen = Perlin_generator(100, 40)
         self.temperature_gen = generator(0, 20, (-50, 50))
         self.world = {}
 
