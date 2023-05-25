@@ -525,6 +525,24 @@ class Game:
                     s += "!"
 
                 self.error(s)
+        elif _command(split, 'fill int int int int block') or _command(split, 'fill int int int int block int'):
+            from_x = int(split[1])
+            to_x = int(split[3])
+            from_y = int(split[2])
+            to_y = int(split[4])
+            b = split[5]
+
+            if len(split) == 7:
+                update = False
+            else:
+                update = True
+
+            for x in range(from_x, to_x):
+                for y in range(from_y, to_y):
+                    if update:
+                        self.world.set(x, y, block.block(b, self.blocks), block_update=(x == from_x or x == to_x - 1))
+                    else:
+                        self.world.set(x, y, block.block(b, self.blocks), block_update=False)
         elif split[0] == 'gamerule':
             if len(split) == 1:
                 for rule in self.gameRule.__dict__:

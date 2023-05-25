@@ -188,12 +188,12 @@ class world:
             else:
                 return block.block('air', self.blocks)
 
-    def set(self, x, y, value: block.block, update=True):
+    def set(self, x, y, value: block.block, update=True, block_update=True):
         value.x = x
         value.y = y
 
         if y < 40:
-            if self.gen_new:
+            if self.gen_new and block_update:
                 self.to_append += [self.get(value.x - 1, value.y), self.get(value.x, value.y - 1),
                                    self.get(value.x + 1, value.y), self.get(value.x, value.y + 1),
 
