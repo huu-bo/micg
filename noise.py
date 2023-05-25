@@ -1,24 +1,18 @@
-import os
 import random
 import block
-import json
 
 import logger
 import net
 
 
 class generator:
-    def __init__(self, seed, floor=10):
+    def __init__(self, seed, floor=10, clamp=None):
         self.seed = seed  # unused
+        self.clamp = clamp
 
         # holes in the floor are a feature
 
         # a start to generate more world next to
-        # self.generated = {
-        #     19: floor,
-        #     20: floor,
-        #     21: floor,
-        # }
         self.generated = {i: floor for i in range(-10, 11)}
 
         self.min_gen = -10
@@ -59,7 +53,11 @@ class generator:
                 self.generated[i] = self.max_gen_value
                 self.max_gen = i
             else:
+                logger.warn(f"generating default value 10 for index {i}")
                 self.generated[i] = 10
+
+            if self.clamp is not None:
+                self.generated[i] = min(max(self.clamp[0], self.generated[i]), self.clamp[1])
 
             return self.generated[i]
 
