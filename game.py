@@ -599,8 +599,10 @@ class Game:
 
         save = {
             'world': self.world.save(),
-            'version': VERSION
-            # TODO: save gamerules and players
+            'version': VERSION,
+
+            'player': self.player.save(),
+            'gamerule': self.gameRule.save()
         }
         with open('./saves/' + filename + '.json', 'w') as file:
             json.dump(save, file)
@@ -624,7 +626,14 @@ class Game:
 
         if 'version' in save:  # TODO: parse and check version number
             logger.log('Beta world')
+
+            if save['version'] != VERSION:
+                logger.warn(f"save version: '{save['version']}', current version: '{VERSION}'")
+
             self.world.load(save['world'])  # TODO: load player
+
+            self.player.load(save['player'])  # TODO: store multiplayer other players
+            self.gameRule.load(save['gamerule'])
         else:  # Alpha saves
             logger.log('Alpha world')
             self.world.load(save)
@@ -646,6 +655,13 @@ class GameRule:
         self.permissionChangeGamerule = True  # False: host, True: everyone
         self.permissionSetBlock = False
         self.permissionGive = False
+
+    def save(self):
+        return {i: self.__dict__[i] for i in self.__dict__ if not i.startswith('--')}
+
+    def load(self, raw: dict):
+        for i in raw:
+            self.__dict__[i] = raw[i]
 
 
 class Chat:

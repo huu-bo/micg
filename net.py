@@ -187,6 +187,20 @@ class player:
             for i in self.inventory:
                 self.inventory[i] = 0
 
+    def save(self):
+        return {
+            'x': self.x,
+            'y': self.y,
+            'name': self.name,
+            'inventory': self.inventory
+        }
+
+    def load(self, raw: dict):
+        self.x = raw['x']
+        self.y = raw['y']
+        self.name = raw['name']
+        self.inventory = raw['inventory']
+
 
 class Server:
     def __init__(self, world, ip='localhost'):
