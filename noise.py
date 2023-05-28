@@ -49,7 +49,8 @@ class Random:
         }
 
     def load(self, raw: dict):
-        self.values = raw['values']
+        # json does not allow int indexes?
+        self.values = {int(i): raw['values'][i] for i in raw['values']}
         self.min_gen = raw['min']
         self.max_gen = raw['max']
 
@@ -170,7 +171,7 @@ class Perlin_generator:
         )
 
         i = i / self.scale
-        x = i // self.scale
+        x = int(i // self.scale)
         a = (i - x * self.scale) / self.scale
         out += self._interp(
             self.big_generator.gen(x) * self.scale,
@@ -183,10 +184,92 @@ class Perlin_generator:
         mu = math.cos(x * math.pi) / 2 + .5
         return a * mu + b * (1 - mu)
 
+    def save(self):
+        return {
+            'scale': self.scale,
+            'big': self.big_generator.save(),
+            'small': self.small_generator.save()
+        }
+
+    def load(self, raw: dict):
+        self.scale = raw['scale']
+        self.big_generator.load(raw['big'])
+        self.small_generator.load(raw['small'])
+
+
+class Perlin_filtered:
+    def __init__(self, seed, scale, floor):
+        self.perlin = Perlin_generator(seed, scale)
+
+        self.min_gen = -20
+        self.min_gen_value = floor
+        self.max_gen = 20
+        self.max_gen_value = floor
+
+        self.values = {i: floor for i in range(-20, 21)}
+
+    def gen(self, i):
+        if i in self.values:
+            return self.values[i]
+        else:
+            if i > self.max_gen:
+                for j in range(self.max_gen, i+1):
+                    d = self.perlin.gen(j)
+
+                    if d == self.max_gen_value:
+                        pass
+                    elif d > self.max_gen_value:
+                        self.max_gen_value += 1
+                    else:
+                        self.max_gen_value -= 1
+
+                    self.max_gen += 1
+                    self.values[self.max_gen] = self.max_gen_value
+            else:
+                j = self.min_gen
+                while j != i - 1:
+                    print(j, i-1)
+
+                    d = self.perlin.gen(j)
+
+                    if d == self.min_gen_value:
+                        pass
+                    elif d > self.min_gen_value:
+                        self.min_gen_value += 1
+                    else:
+                        self.min_gen_value -= 1
+
+                    self.min_gen -= 1
+                    self.values[self.min_gen] = self.min_gen_value
+
+                    j -= 1
+
+            return self.values[i]
+
+    def load(self, raw: dict):
+        self.min_gen = raw['min_gen']
+        self.min_gen_value = raw['min_gen_value']
+
+        self.max_gen = raw['max_gen']
+        self.max_gen_value = raw['max_gen_value']
+
+        self.perlin.load(raw['generator'])
+
+    def save(self):
+        return {
+            'min_gen': self.min_gen,
+            'min_gen_value': self.min_gen_value,
+
+            'max_gen': self.max_gen,
+            'max_gen_value': self.max_gen_value,
+
+            'generator': self.perlin.save()
+        }
+
 
 class world:
-    def __init__(self, gen: generator, game, gen_new=True, server=None, serving=False):
-        self.gen = Perlin_generator(100, 40)
+    def __init__(self, seed, floor, game, gen_new=True, server=None, serving=False):
+        self.gen = Perlin_filtered(seed, 40, floor)
         self.temperature_gen = generator(0, 20, (-50, 50))
         self.world = {}
 

@@ -47,8 +47,8 @@ class Game:
 
         self.settings_gui_shown = False
 
-        gen = noise.generator(3, floor=100)  # TODO: base seed on time
-        self.world = noise.world(gen, self)
+        # TODO: base seed on time
+        self.world = noise.world(3, 100, self)
         self.blocks = self.world.blocks
 
         self.players = {'self': net.player(False, self.blocks)}
@@ -611,7 +611,7 @@ class Game:
     def join(self, ip='localhost'):
         self.connection = net.client(self.world, ip=ip)
 
-        self.world = noise.world(noise.generator(0), self, gen_new=False, server=self.connection, serving=False)
+        self.world = noise.world(0, 0, self, gen_new=False, server=self.connection, serving=False)
         self.connection.world = self.world
 
         self.connection.players[self.connection.name] = net.player(True, self.blocks, server=self.connection, physics=False)
