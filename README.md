@@ -8,10 +8,6 @@ with pygame `2.1.2` (`SDL 2.0.16`)
 
 python 3.* and pygame 2.* should be fine **(no guarantees)**
 
-## Dev branch - indev (beta)
-
-This branch is made for beta development. This version is not stable.
-
 ## Disclaimer
 
 Mine and Craft game is NOT related to any other square games (e.g. Minesweeper, 2048, Super Mario Bros.)
