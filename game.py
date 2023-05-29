@@ -22,7 +22,7 @@ import logger
 # where M is the full name of a greek letter starting with a capital letter
 #    e.g. 'Alpha' 'Beta'
 
-VERSION = 'Beta 1-pre'
+VERSION = 'Beta 1'
 size = 20
 
 
@@ -200,6 +200,7 @@ class Game:
         mouse_click = [mouse_press[i] and not self.pre_mouse[i] for i in range(3)]
 
         # world rendering
+        # TODO: make a copy of player position because it changes while rendering if online
         for y in range(41):
             for x in range(41):
                 b = self.world.get(x + math.floor(self.player.x - 20), y + math.floor(self.player.y) - 20)
@@ -383,9 +384,8 @@ class Game:
             return
 
         if text[0:1] == '/':
-            self.command(text)
-
             logger.log(f'<{self.player.name}> ' + text)  # TODO: multiplayer players
+            self.command(text)
         else:
             self.chat_history.append(Chat(text, 'c', self.player.name))
 

@@ -228,8 +228,6 @@ class Perlin_filtered:
             else:
                 j = self.min_gen
                 while j != i - 1:
-                    print(j, i-1)
-
                     d = self.perlin.gen(j)
 
                     if d == self.min_gen_value:
@@ -460,7 +458,9 @@ class world:
         return w
 
     def load(self, raw: dict):
+        # TODO: this is really slow
         self.world = {}
+        logger.log(f'world chunks size {len(raw.keys())}')
         for i in raw:
             if i != 'data':
                 c = []
@@ -484,7 +484,7 @@ class world:
                 # print(i)
                 self.world[(int(i.split(' ')[0]), int(i.split(' ')[1]))] = c
             else:
-                self.gen.load(raw[i]['gen'])  # TODO: also load and save player position and inventory
+                self.gen.load(raw[i]['gen'])
                 # TODO: also load other players if multiplayer server
 
         logger.log('Loaded!')

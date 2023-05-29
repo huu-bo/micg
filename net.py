@@ -125,41 +125,55 @@ class player:
             if self.key[1]:
                 self.xv -= .1
 
-            floor = False
-            hit = False
-
             self.yv += .1
             self.y += self.yv
 
-            while world.get(math.floor(self.x), math.floor(self.y) - 1).solid or \
-                    world.get(math.ceil(self.x), math.floor(self.y) - 1).solid:
-                self.yv = 0
-                self.y += .01
-                floor = None
-                hit = True
-            if hit:
-                self.y -= .01
-            if floor is None:
-                return
+            if (
+                    world.get(math.floor(self.x), math.ceil(self.y) - 1).solid
+                    or world.get(math.ceil(self.x), math.ceil(self.y) - 1).solid
+                    or world.get(math.floor(self.x), math.ceil(self.y)).solid
+                    or world.get(math.ceil(self.x), math.ceil(self.y)).solid
+            ):
+                step = .01
+                amount = 1000
+                for i in range(amount):
+                    y = self.y - i * step
+                    if (
+                            not world.get(math.floor(self.x), math.floor(y)).solid
+                            and not world.get(math.ceil(self.x), math.floor(y)).solid
+                            and not world.get(math.floor(self.x), math.ceil(y)).solid
+                            and not world.get(math.ceil(self.x), math.ceil(y)).solid
+                    ):
+                        self.y = y
+                        self.yv = 0
+                        break
 
-            hit = False
-            while world.get(math.floor(self.x), math.ceil(self.y)).solid or \
-                    world.get(math.ceil(self.x), math.ceil(self.y)).solid:
-                self.yv = 0
-                self.y -= .01
+                    y = self.y + i * step
+                    if not world.get(math.floor(self.x), math.ceil(y)).solid and \
+                            not world.get(math.ceil(self.x), math.ceil(y)).solid:
+                        self.y = y
+                        self.yv = 0
+                        break
+                else:
+                    logger.log('suffocated')  # TODO: this is a dumb message
+                    self.die(world.game.gameRule.keepInventory)
+
+            if (  # TODO: filthy hack
+                    world.get(math.floor(self.x), math.ceil(self.y + .1)).solid
+                    or world.get(math.ceil(self.x), math.ceil(self.y + .1)).solid
+            ):
                 floor = True
-                hit = True
-            # if hit:
-            #     self.y += .005
+            else:
+                floor = False
 
             if floor and self.key[0]:
                 self.yv = -.55
 
             self.x += self.xv
-            while world.get(math.ceil(self.x), math.floor(self.y) + 1).solid:
+            while world.get(math.ceil(self.x), math.ceil(self.y)).solid:
                 self.x -= .01
                 self.xv = 0
-            while world.get(math.floor(self.x), math.floor(self.y) + 1).solid:
+            while world.get(math.floor(self.x), math.ceil(self.y)).solid:
                 self.x += .01
                 self.xv = 0
 
