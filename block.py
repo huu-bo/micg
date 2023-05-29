@@ -56,6 +56,11 @@ class block:
             else:
                 self.h_support = False
 
+            if 'friction' in blocks[name]:
+                self.friction = blocks[name]['friction']
+            else:
+                self.friction = 2
+
             # template
             # if 'p' in blocks[name]:
             #     self.p = blocks[name]['p']

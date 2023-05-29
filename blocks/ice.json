@@ -2,5 +2,6 @@
   "solid": true,
   "render": true,
   "max support": -1,
-  "color": [0, 198, 255]
+  "color": [0, 198, 255],
+  "friction": 1.1
 }

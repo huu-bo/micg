@@ -181,7 +181,15 @@ class player:
                 if abs(round(self.x) - self.x) < .2:
                     self.x = round(self.x)
 
-            self.xv /= 2
+            if floor:
+                # TODO: filthy hack
+                friction = min(
+                    world.get(math.floor(self.x), math.ceil(self.y + .1)).friction,
+                    world.get(math.ceil(self.x), math.ceil(self.y + .1)).friction
+                )
+            else:
+                friction = 2
+            self.xv /= friction
 
     def die(self, keep_inventory):
 
