@@ -6,6 +6,8 @@ import math
 import time
 
 import block
+import logger
+import noise
 
 
 class net:
@@ -66,6 +68,10 @@ class net:
 # AM:
 # x y
 
+# AD:
+#
+# player death
+
 # IM:
 # x y name
 # sent from server_client to client to let client know about other clients moving
@@ -83,9 +89,9 @@ class net:
 
 
 class player:
-    def __init__(self):
+    def __init__(self, online, blocks, server=None, physics=True):
         self.x = 0
-        self.y = 0
+        self.y = -70
         self.xv = 0
         self.yv = 0
 
@@ -93,31 +99,124 @@ class player:
         self.key = [False, False, False, False]  # up, left, down, right
 
         self.name = None
+        self.selection = 'grass'
+        if online and server is None:
+            logger.warn('player online and no connection?????')
+        self.server = server
+        self.online = online
+        self.phy = physics
+
+        self.inventory = {i: 0 for i in blocks if blocks[i]['solid']}
+        # TODO: property for if item should be mineable and be able to put in the inventory
 
     def physics(self, world):
-        if self.key[3]:
-            self.xv += .1
-        if self.key[1]:
-            self.xv -= .1
+        if not self.phy:
+            # self.server.net.send(f'AM{self.x} {self.y}')
+            packet = 'AK'
+            for k in self.key:
+                if k:
+                    packet += '1'
+                else:
+                    packet += '0'
+            self.server.net.send(packet)
+        else:
+            if self.key[3]:
+                self.xv += .1
+            if self.key[1]:
+                self.xv -= .1
 
-        self.yv += .1
-        self.y += self.yv
+            self.yv += .1
+            self.y += self.yv
 
-        floor = False
-        while world.get(math.floor(self.x), math.ceil(self.y)).solid or\
-                world.get(math.ceil(self.x), math.ceil(self.y)).solid:
-            self.yv = 0
-            self.y -= .1
-            floor = True
+            if (
+                    world.get(math.floor(self.x), math.ceil(self.y) - 1).solid
+                    or world.get(math.ceil(self.x), math.ceil(self.y) - 1).solid
+                    or world.get(math.floor(self.x), math.ceil(self.y)).solid
+                    or world.get(math.ceil(self.x), math.ceil(self.y)).solid
+            ):
+                step = .01
+                amount = 1000
+                for i in range(amount):
+                    y = self.y - i * step
+                    if (
+                            not world.get(math.floor(self.x), math.floor(y)).solid
+                            and not world.get(math.ceil(self.x), math.floor(y)).solid
+                            and not world.get(math.floor(self.x), math.ceil(y)).solid
+                            and not world.get(math.ceil(self.x), math.ceil(y)).solid
+                    ):
+                        self.y = y
+                        self.yv = 0
+                        break
 
-        if floor and self.key[0]:
-            self.yv = -.55
+                    y = self.y + i * step
+                    if not world.get(math.floor(self.x), math.ceil(y)).solid and \
+                            not world.get(math.ceil(self.x), math.ceil(y)).solid:
+                        self.y = y
+                        self.yv = 0
+                        break
+                else:
+                    logger.log('suffocated')  # TODO: this is a dumb message
+                    self.die(world.game.gameRule.keepInventory)
 
-        self.x += self.xv
-        self.xv /= 2
+            if (  # TODO: filthy hack
+                    world.get(math.floor(self.x), math.ceil(self.y + .1)).solid
+                    or world.get(math.ceil(self.x), math.ceil(self.y + .1)).solid
+            ):
+                floor = True
+            else:
+                floor = False
+
+            if floor and self.key[0]:
+                self.yv = -.55
+
+            self.x += self.xv
+            while world.get(math.ceil(self.x), math.ceil(self.y)).solid:
+                self.x -= .01
+                self.xv = 0
+            while world.get(math.floor(self.x), math.ceil(self.y)).solid:
+                self.x += .01
+                self.xv = 0
+
+            if abs(self.xv) < .03:
+                if abs(round(self.x) - self.x) < .2:
+                    self.x = round(self.x)
+
+            self.xv /= 2
+
+    def die(self, keep_inventory):
+
+        logger.log(f"Player {self.name} died at {self.x}, {self.y}")
+
+        if self.phy and self.online:
+            self.server.net.send('AD')
+
+        self.x = 0
+        self.y = -70
+        self.xv = 0
+        self.yv = 0
+
+        self.key = [False, False, False, False]
+
+        if not keep_inventory:
+            for i in self.inventory:
+                self.inventory[i] = 0
+
+    def save(self):
+        return {
+            'x': self.x,
+            'y': self.y,
+            'name': self.name,
+            'inventory': self.inventory
+        }
+
+    def load(self, raw: dict):
+        self.x = raw['x']
+        self.y = raw['y']
+        self.name = raw['name']
+        self.inventory = raw['inventory']
 
 
-class server:
+class Server:
     def __init__(self, world, ip='localhost'):
         self.threads = []
         self.run = True
@@ -130,6 +229,7 @@ class server:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.settimeout(.5)
         self.server.bind((ip, 60000))
+        # self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.listen()
 
         self.accept_thread = threading.Thread(target=self._accept, name='accept')
@@ -140,8 +240,8 @@ class server:
         while self.run:
             try:
                 c, address = self.server.accept()
-                print('accepted', c, address)
-                p = player()
+                logger.log(f'Accepted {c}, {address}')
+                p = player(True, self.world.blocks)
                 self.players.append(p)
                 pi = pipe()
                 self.pipes.append(pi)
@@ -157,10 +257,10 @@ class server:
     def exit(self):
         self.run = False
         for t in self.threads:
-            print('joining', t)
+            logger.log(f'Joining {t}')
             t.join(1)
             if t.is_alive():
-                print(t, 'is still alive')
+                logger.log(f'{t}, is still alive')
 
     def remove(self, s_c):
         self.players.remove(s_c.player)
@@ -171,21 +271,22 @@ class server:
 
     def send_all_except(self, data, exception):  # TODO: broken
         for p in self.pipes:
-            if p != exception:
+            if p is not exception:
                 p.send(data)
 
 
 class server_client:
-    def __init__(self, c: socket.socket, s: server, p: player, pi):
+    def __init__(self, c: socket.socket, s: Server, p: player, pi):
         self.c = c
         self.s = s
         self.r = True  # TODO: what is 'r'
         self.name = 'NAME_NOT_SENT'
         self.player = p
+        self.player.server = self
         self.pipe = pi
         self.net = net(c)
 
-        self.world = self.s.world
+        self.world: noise.world = self.s.world
 
         self.c.settimeout(.02)
         self.run()
@@ -193,23 +294,23 @@ class server_client:
     def packet_recv(self, packet: str):
         # data = packet.decode('utf-8')
         data = packet
-        print("client: '" + self.name + "' packet: '" + data + "'")
+        # info("client: '" + self.name + "' packet: '" + data + "'")
         if data[0] == 'I':
             if data[1] == 'N':
                 had_name = self.name != 'NAME_NOT_SENT'
                 if ' ' not in data[2:]:
                     self.name = data[2:]
                 else:
-                    print('incorrect name', data[2:])
+                    logger.error(f"incorrect name '{data[2:]}'")
                     if self.r:
                         self.net.send('EN')
                 if not had_name:
                     # let all the other clients that are not this client know that this client exists
                     self.s.send_all_except('IN' + self.name, self.pipe)
-                print(self.name, 'joined')
+                logger.log(f'{self.name} joined')
             elif data[1] == 'B':
                 split = data[2:].split(' ')
-                print('block info', split, 'deprecated')
+                logger.warn('block info deprecated')
                 if self.world is not None:
                     if len(split) == 2:
                         x = int(split[0])
@@ -228,7 +329,7 @@ class server_client:
                     # print('IC' + split[0] + ' ' + split[1] + ' ' + c[:50])
                     self.net.send('IC' + split[0] + ' ' + split[1] + ' ' + c)
             else:
-                print('unknown info packet:', data)
+                logger.error(f"Unknown info packet: '{data}'")
         elif data[0] == 'A':
             if data[1] == 'K':
                 for i in range(4):
@@ -243,12 +344,15 @@ class server_client:
                 self.s.send_all(data)  # let all the other clients know,
                 # will cause the packet to be sent back to the client that sent it
 
+            elif data[1] == 'D':
+                self.player.die(self.world.game.gameRule.keepInventory)
+
             elif data[1] == 'Q':
                 self.close()
             else:
-                print('unknown action packet:', data)
+                logger.error(f"Unknown action packet: '{data}'")
         else:
-            print('unknown packet type:', data)
+            logger.error(f"Unknown packet type: '{data}'")
 
     def run(self):
         while self.r:
@@ -264,15 +368,13 @@ class server_client:
                 for packet in data:
                     # if data[:2] == 'AP':
                     self.net.send(packet)
-                    data = self.pipe.recv()
 
-            if self.r:
-                if self.player.xv != 0 or self.player.yv != 0:
-                    packet = 'AM' + str(self.player.x) + ' ' + str(self.player.y)
-                    self.net.send(packet)
+            if self.player.xv != 0 or self.player.yv != 0:
+                packet = 'AM' + str(self.player.x) + ' ' + str(self.player.y)
+                self.net.send(packet)
 
-                    packet = 'IM' + str(self.player.x) + ' ' + str(self.player.y) + ' ' + self.name
-                    self.s.send_all(packet)
+                packet = 'IM' + str(self.player.x) + ' ' + str(self.player.y) + ' ' + self.name
+                self.s.send_all(packet)
 
     def close(self):
         self.c.close()
@@ -296,9 +398,6 @@ class client:
 
         self.last_move = 'AK0000'
 
-        self.x = 0
-        self.y = 0
-
         self.connect_thread = threading.Thread(target=self._connect)
         self.connect_thread.start()
         # print(self.name, 'started connect thread')
@@ -306,78 +405,53 @@ class client:
         self.recv_thread = threading.Thread(target=self.recv)
         self.recv_thread.start()
 
-    def update(self, key, world):
-        out = ['A', 'K']
-        if key[pygame.K_w] or key[pygame.K_UP]:
-            out.append('1')
-        else:
-            out.append('0')
-        if key[pygame.K_a] or key[pygame.K_LEFT]:
-            out.append('1')
-        else:
-            out.append('0')
-        if key[pygame.K_s] or key[pygame.K_DOWN]:
-            out.append('1')
-        else:
-            out.append('0')
-        if key[pygame.K_d] or key[pygame.K_RIGHT]:
-            out.append('1')
-        else:
-            out.append('0')
-
-        out = ''.join(out)
-        if self.connected:
-            if self.connect_thread.is_alive():
-                self.connect_thread.join(1)
-                if self.connect_thread.is_alive():
-                    self.connected = False
-                else:
-                    self.net.send('IN' + 'timeout')  # ?
-
-        if self.connected and out != self.last_move:
-            self.net.send(out)
-            self.last_move = out
-
-        return self.x, self.y
-
     def _connect(self):
         self.server.connect((self.ip, 60000))
-        print('connected')
+        logger.log(f'Connected with {self.ip}')
         self.connected = True
         self.net.send('IN' + self.name)
 
     def recv(self):
+        i = 0
         while not self.connected:
-            print('waiting to connect')
+            if i < 2:
+                logger.log('Waiting to connect...')
+            elif i < 10:
+                logger.warn('Waiting to connect...')
+            else:
+                logger.error('connect timeout')
+                return
             time.sleep(1)
+            i += 1
         while self.connected:
             for p in self.net.recv(self.server.recv(1024)):
                 self.recv_packet(p)
 
     def recv_packet(self, data):
+        # print(f"client received packet '{data}'")
         if data:
             if data[0] == 'A':
                 if data[1] == 'M':
                     split = data[2:].split(' ')
                     if len(split) == 2:
-                        x = self.x
-                        y = self.y
+                        x = self.players[self.name].x
+                        y = self.players[self.name].y
                         try:
-                            self.x = float(split[0])
-                            self.y = float(split[1])
+                            self.players[self.name].x = float(split[0])
+                            self.players[self.name].y = float(split[1])
                         except ValueError as error:
                             print(error)
-                            self.x = x  # reset position to before packet to not only update x in error
-                            self.y = y
+                            self.players[self.name].x = x  # reset position to before packet to not only update x in error
+                            self.players[self.name].y = y
                 elif data[1] == 'P':
                     split = data[2:].split(' ')
                     if len(split) == 3:
                         self.world.set(int(split[0]), int(split[1]), block.block(split[2], self.world.blocks),
                                        update=False)
                     else:
-                        print('incorrect packet')  # TODO: keep track of amount of incorrect packets
+                        logger.error(f"Incorrect packet '{data}'")  # TODO: keep track of amount of incorrect packets
                 else:
-                    print('incorrect action packet:', data)
+                    logger.error(f"Incorrect action packet: '{data}'")
 
             elif data[0] == 'I':
                 if data[1] == 'C':
@@ -386,36 +460,41 @@ class client:
                     self.chunk_requests[(int(split[0]), int(split[1]))] = True
                 elif data[1] == 'N':
                     if data[2:] not in self.players:
-                        self.players[data[2:]] = player()
-                        print(f'player {data[2:]} joined')
+                        p = player(True, self.world.blocks)
+                        p.name = data[2:]
+                        self.players[data[2:]] = p
+                        logger.log(f'Player {data[2:]} joined')
                     else:
-                        print(f'player {data[2:]} joined multiple times')  # TODO: let clients know about other clients disconnecting
+                        logger.log(f'Player {data[2:]} joined multiple times')  # TODO: let clients know about other clients disconnecting
                 elif data[1] == 'M':
                     split = data[2:].split(' ')
                     name = split[2]
                     if name in self.players:
                         self.players[name].x = float(split[0])
                         self.players[name].y = float(split[1])
+                    elif name == self.world.game.player.name:
+                        self.world.game.player.x = float(split[0])
+                        self.world.game.player.y = float(split[1])
                     else:
-                        print(f"player '{name}' moved but does not exist")
+                        logger.warn(f"Player '{name}' moved but does not exist")
                 else:
-                    print('incorrect information packet type:', data)
+                    logger.warn(f'Incorrect information packet type: {data}')
 
             else:
-                print('incorrect packet type:', data)
+                logger.warn(f'Incorrect packet type: {data}')
 
     def get_chunk(self, x, y):
         if (x, y) not in self.chunk_requests:
             packet = 'IC' + str(x) + ' ' + str(y)
-            self.net.send(packet)
+            self.net.send(packet)  # TODO: will send packets even if connection is not established and crash
             self.chunk_requests[(x, y)] = False
 
             t = 0
             while not self.chunk_requests[(x, y)]:
                 time.sleep(.1)
                 t += 1
-                if t > 1000 and not self.chunk_requests[(x, y)]:
-                    print('chunk request timeout')
+                if t > 10 and not self.chunk_requests[(x, y)]:
+                    logger.warn('Chunk request timeout')
 
                     packet = 'IC' + str(x) + ' ' + str(y)
                     self.net.send(packet)
@@ -429,16 +508,16 @@ class client:
         self.net.send('AQ')
         self.connected = False
 
-        print('connecting connect_thread')
+        logger.log('connecting connect_thread')
         self.connect_thread.join(1)
         if self.connect_thread.is_alive():
-            print('connect_thread is still alive')
+            logger.warn('connect_thread is still alive')
         else:
-            print('connect_tread joined')
+            logger.log('connect_tread joined')
 
         self.recv_thread.join(1)
         if self.recv_thread.is_alive():
-            print('recv_thread lives on')
+            logger.log('recv_thread lives on')
 
         self.server.close()
 

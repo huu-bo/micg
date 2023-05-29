@@ -1,5 +1,6 @@
 import os
 import json
+import random
 
 
 def load(directory='blocks/'):
@@ -20,6 +21,8 @@ class block:
         self.y = None
 
         self.on_floor = False  # solid block under this block, only used if self.h_support
+
+        self.last_update_tick = 0
 
         if name in blocks:
             if 'solid' in blocks[name]:  # there has got to be a better way to do this
@@ -89,12 +92,27 @@ class block:
             if not self.on_floor and self.h_support:
                 self.support += 1
 
+        if self.max_support == -2:
+            options = []
+            if not world.get(self.x + 1, self.y).solid:
+                options.append(1)
+            if not world.get(self.x - 1, self.y).solid:
+                options.append(-1)
+
+            if len(options) > 0:
+                direction = random.choice(options)
+                world.set(self.x, self.y, block('air', self.blocks))
+                self.x += direction
+                world.set(self.x, self.y, self)
+                moved = True
+
         if (not world.get(self.x, self.y + 1).solid) and\
                 ((not world.get(self.x - 1, self.y).solid) and (not world.get(self.x + 1, self.y).solid) or not self.h_support):
             world.set(self.x, self.y, block('air', self.blocks))
             self.y += 1
             world.set(self.x, self.y, self)
             moved = True
+            self.support = 0
         else:
             if world.get(self.x, self.y - 1).solid:
                 if self.support != world.get(self.x, self.y - 1).support + 1:
@@ -110,36 +128,39 @@ class block:
                 if self.support != world.get(self.x - 1, self.y).support + 1:
                     moved = True
                 self.support = world.get(self.x - 1, self.y).support + 1
+                if world.get(self.x + 1, self.y).solid:
+                    self.support = max(self.support, world.get(self.x + 1, self.y).support)
 
             else:
                 if self.support != 0:
                     moved = True
                 self.support = 0
 
-            if self.support > self.max_support:
-                if not world.get(self.x + 1, self.y + 1).solid:
-                    world.set(self.x, self.y, block('air', self.blocks))
-                    self.y += 1
-                    self.x += 1
-                    world.set(self.x, self.y, self)
-                    moved = True
-                elif not world.get(self.x - 1, self.y + 1).solid:
-                    world.set(self.x, self.y, block('air', self.blocks))
-                    self.y += 1
-                    self.x -= 1
-                    world.set(self.x, self.y, self)
-                    moved = True
+        if self.support > self.max_support and world.get(self.x, self.y + 1).solid:
+            options = []
+            if not world.get(self.x + 1, self.y + 1).solid:
+                options.append(1)
+            if not world.get(self.x - 1, self.y + 1).solid:
+                options.append(-1)
+
+            if options:
+                world.set(self.x, self.y, block('air', self.blocks))
+                self.y += 1
+                self.x += random.choice(options)
+                world.set(self.x, self.y, self)
+                moved = True
 
         if moved:
             if self.solid:
                 assert self.name != 'air', 'wtf'
                 y = self.y + 1
                 if world.get(self.x, self.y - 1).solid:
-                    self.support = world.get(self.x, self.y - 1).support + 1
+                    if not self.h_support:
+                        self.support = world.get(self.x, self.y - 1).support + 1
                 else:
                     self.support = 0
                 support = self.support
-                while world.get(self.x, self.y).solid and y > 1:
+                while world.get(self.x, y).solid and y < 39:
                     support += 1
                     world.get(self.x, y).support = support
                     y += 1
@@ -163,18 +184,18 @@ class block:
             return []
 
 
-def craft(pi, b, f, blocks, amount=1):
+def craft(pi, b, f, blocks, game, amount=1):
     if b not in blocks:
-        print(b, 'does not exist')
+        game.error(f"block {b}, does not exist")
         return
     if 'craft' not in blocks[b]:
-        print(b, 'not craftable')
+        game.error(f"can't craft {b}")
         return
     if f not in blocks[b]['craft']:
-        print('cannot craft', b, 'from', f)
+        game.error(f"can't craft {b} from {f}")
         return
     if pi[f] < amount * blocks[b]['craft'][f]:
-        print('not enough', f, 'amount:', pi[f], 'amount needed:', amount * blocks[b]['craft'][f])
+        game.error(f"not enough {f}, amount: {pi[f]}, amount needed: {amount * blocks[b]['craft'][f]}")
         return
 
     pi[f] -= amount * blocks[b]['craft'][f]
