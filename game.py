@@ -631,7 +631,7 @@ class Game:
     def host(self, ip='localhost'):
         self.connection = net.Server(None, ip=ip)
 
-        self.world = noise.world(noise.generator(0), self, True, self.connection, True)
+        self.world = noise.world(3, 100, self, gen_new=True, server=self.connection, serving=True)
         self.connection.world = self.world
 
         self.online = True

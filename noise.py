@@ -274,7 +274,7 @@ class Perlin_filtered:
 
 
 class world:
-    def __init__(self, seed, floor, game, gen_new=True, server=None, serving=False):
+    def __init__(self, seed: int, floor: int, game, gen_new=True, server=None, serving=False):
         self.gen = Perlin_filtered(seed, 40, floor)
         self.temperature_gen = generator(seed, 20, (-50, 50))
         self.cloud_gen = generator(seed + 1, floor=0, clamp=(0, 5))
@@ -390,7 +390,6 @@ class world:
             for i in range(40):
                 if y * 40 == -800:
                     if c[0][i % 40].name == 'air':
-                        print(i + x * 40, self.cloud_gen.gen(i + x * 40))
                         for j in range(self.cloud_gen.gen(i + x * 40)):
                             c[j][i % 40] = block.block('cloud', self.blocks)
 
