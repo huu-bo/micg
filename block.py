@@ -44,7 +44,7 @@ class block:
             if 'max support' in blocks[name]:
                 self.max_support = blocks[name]['max support']
             else:
-                self.max_support = 10
+                self.max_support = 10  # TODO: this is a weird default
 
             if 'gravity' in blocks[name]:
                 self.gravity = blocks[name]['gravity']
@@ -77,6 +77,11 @@ class block:
 
             self.gravity = True
             self.h_support = False
+
+            self.friction = 2
+
+        if not self.gravity or self.max_support == -4:
+            self.on_floor = True
 
     def update(self, world):
         if self.x is None or not self.solid or not self.gravity:
@@ -111,8 +116,41 @@ class block:
                 world.set(self.x, self.y, self)
                 moved = True
 
-        if (not world.get(self.x, self.y + 1).solid) and\
-                ((not world.get(self.x - 1, self.y).solid) and (not world.get(self.x + 1, self.y).solid) or not self.h_support):
+        elif self.max_support == -4 and self.y > -800:
+            if world.get(self.x, self.y - 1).solid:
+                if self.support != world.get(self.x, self.y - 1).support + 1:
+                    moved = True
+                self.support = world.get(self.x, self.y - 1).support + 1
+            else:
+                moved = True
+                self.support = 0
+                world.set(self.x, self.y, block('air', self.blocks))
+                self.y -= 1
+                world.set(self.x, self.y, self)
+
+            if world.get(self.x, self.y - 1).solid:
+                options = []
+                if not world.get(self.x + 1, self.y - 1).solid:
+                    options.append(1)
+                if not world.get(self.x - 1, self.y - 1).solid:
+                    options.append(-1)
+
+                if options:
+                    world.set(self.x, self.y, block('air', self.blocks))
+                    self.y -= 1
+                    self.x += random.choice(options)
+                    world.set(self.x, self.y, self)
+                    moved = True
+
+        elif (
+                not world.get(self.x, self.y + 1).solid
+                and (
+                    not world.get(self.x - 1, self.y).solid
+                    and not world.get(self.x + 1, self.y).solid
+                    or not self.h_support
+                )
+                and self.max_support != -4
+        ):
             world.set(self.x, self.y, block('air', self.blocks))
             self.y += 1
             world.set(self.x, self.y, self)
@@ -141,7 +179,7 @@ class block:
                     moved = True
                 self.support = 0
 
-        if self.support > self.max_support and world.get(self.x, self.y + 1).solid:
+        if self.support > self.max_support != -4 and world.get(self.x, self.y + 1).solid:
             options = []
             if not world.get(self.x + 1, self.y + 1).solid:
                 options.append(1)

@@ -97,11 +97,19 @@ class generator:
             if i == self.min_gen - 1:
                 self.min_gen_slope = min(max(-1, self.min_gen_slope + int(self.generator.gen(i) * 3) - 1), 1)
                 self.min_gen_value += self.min_gen_slope
+                if self.clamp is not None:
+                    self.min_gen_value = min(max(self.clamp[0], self.min_gen_value), self.clamp[1])
+                    if self.min_gen_value in self.clamp:
+                        self.min_gen_slope = 0
                 self.generated[i] = self.min_gen_value
                 self.min_gen = i
             elif i == self.max_gen + 1:
                 self.max_gen_slope = min(max(-1, self.max_gen_slope + int(self.generator.gen(i) * 3) - 1), 1)
                 self.max_gen_value += self.max_gen_slope
+                if self.clamp is not None:
+                    self.max_gen_value = min(max(self.clamp[0], self.max_gen_value), self.clamp[1])
+                    if self.max_gen_value in self.clamp:
+                        self.max_gen_slope = 0
                 self.generated[i] = self.max_gen_value
                 self.max_gen = i
             else:
@@ -268,7 +276,8 @@ class Perlin_filtered:
 class world:
     def __init__(self, seed, floor, game, gen_new=True, server=None, serving=False):
         self.gen = Perlin_filtered(seed, 40, floor)
-        self.temperature_gen = generator(0, 20, (-50, 50))
+        self.temperature_gen = generator(seed, 20, (-50, 50))
+        self.cloud_gen = generator(seed + 1, floor=0, clamp=(0, 5))
         self.world = {}
 
         self.game = game
@@ -381,8 +390,9 @@ class world:
             for i in range(40):
                 if y * 40 == -800:
                     if c[0][i % 40].name == 'air':
-                        if (i % 10 < 5) * (i % 11 < 7) * (i % 12 < 8):
-                            c[0][i % 40] = block.block('cloud', self.blocks)
+                        print(i + x * 40, self.cloud_gen.gen(i + x * 40))
+                        for j in range(self.cloud_gen.gen(i + x * 40)):
+                            c[j][i % 40] = block.block('cloud', self.blocks)
 
         self.world[(x, y)] = c
 

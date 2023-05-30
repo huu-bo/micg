@@ -2,5 +2,6 @@
   "solid": true,
   "render": true,
   "color": [255, 255, 255],
-  "gravity": false
+  "gravity": true,
+  "max support": -4
 }
