@@ -110,6 +110,8 @@ class player:
         # TODO: property for if item should be mineable and be able to put in the inventory
 
     def physics(self, world):
+        # TODO: some way to enable flying
+
         if not self.phy:
             # self.server.net.send(f'AM{self.x} {self.y}')
             packet = 'AK'
@@ -119,6 +121,22 @@ class player:
                 else:
                     packet += '0'
             self.server.net.send(packet)
+        elif world.game.gameRule.allowFly:
+            if self.key[3]:
+                self.xv += .1
+            if self.key[1]:
+                self.xv -= .1
+
+            if self.key[2]:
+                self.yv += .1
+            if self.key[0]:
+                self.yv -= .1
+
+            self.x += self.xv
+            self.y += self.yv
+
+            self.xv /= 1.1
+            self.yv /= 1.1
         else:
             if self.key[3]:
                 self.xv += .1

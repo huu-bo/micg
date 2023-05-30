@@ -167,19 +167,26 @@ class Game:
             y = math.floor(mouse_pos[1] / size + self.player.y) - 20
             if mouse_press[2]:
                 if self.world.get(x, y).solid:
-                    self.player.inventory[self.world.get(x, y).name] += 1
+                    if not self.gameRule.creative:
+                        self.player.inventory[self.world.get(x, y).name] += 1
 
                 b = block.block('air', self.blocks)
                 self.world.set(x, y, b)
                 self.world.to_update.append(b)
             if not self.world.get(x, y).solid:
                 if mouse_press[0]:
-                    if self.player.inventory[self.player.selection] > 0 and y < 40:
+                    if (
+                            (
+                                    self.player.inventory[self.player.selection] > 0
+                                    or self.gameRule.creative
+                            )
+                            and y < 40
+                    ):
                         b = block.block(self.player.selection, self.blocks)
                         self.world.set(x, y, b)
                         self.world.to_update.append(b)
 
-                        if mouse_pos[1] < size * 40:
+                        if mouse_pos[1] < size * 40 and not self.gameRule.creative:
                             self.player.inventory[self.player.selection] -= 1
 
         if self.server or not self.online:
