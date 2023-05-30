@@ -6,6 +6,7 @@ import math
 import time
 
 import block
+import game
 import logger
 import noise
 
@@ -286,7 +287,7 @@ class Server:
             logger.log(f'Joining {t}')
             t.join(1)
             if t.is_alive():
-                logger.log(f'{t}, is still alive')
+                logger.warn(f'{t}, is still alive')
 
     def remove(self, s_c):
         self.players.remove(s_c.player)
@@ -299,6 +300,9 @@ class Server:
         for p in self.pipes:
             if p is not exception:
                 p.send(data)
+
+    def chat(self, text: str):
+        self.send_all('AC' + text)
 
 
 class server_client:
@@ -326,6 +330,7 @@ class server_client:
                 had_name = self.name != 'NAME_NOT_SENT'
                 if ' ' not in data[2:]:
                     self.name = data[2:]
+                    self.net.send('IN' + self.name)
                 else:
                     logger.error(f"incorrect name '{data[2:]}'")
                     if self.r:
@@ -375,6 +380,10 @@ class server_client:
 
             elif data[1] == 'Q':
                 self.close()
+
+            elif data[1] == 'C':
+                self.world.game.chat_history.append(game.Chat(data[2:], 'c', '#TODO'))  # TODO: username
+
             else:
                 logger.error(f"Unknown action packet: '{data}'")
         else:
@@ -419,6 +428,8 @@ class client:
 
         self.name = 'test'
         self.players = {}
+        self.world.game.players = self.players
+        self.world.game.player = player(False, self.world.blocks)  # placeholder
 
         self.connected = False
 
@@ -466,7 +477,7 @@ class client:
                             self.players[self.name].x = float(split[0])
                             self.players[self.name].y = float(split[1])
                         except ValueError as error:
-                            print(error)
+                            logger.exception('while updating player position', error)
                             self.players[self.name].x = x  # reset position to before packet to not only update x in error
                             self.players[self.name].y = y
                 elif data[1] == 'P':
@@ -476,6 +487,8 @@ class client:
                                        update=False)
                     else:
                         logger.error(f"Incorrect packet '{data}'")  # TODO: keep track of amount of incorrect packets
+                elif data[1] == 'C':
+                    self.world.game.chat_history.append(game.Chat(data[2:], 'c', '#TODO'))  # TODO: username
                 else:
                     logger.error(f"Incorrect action packet: '{data}'")
 
@@ -486,9 +499,11 @@ class client:
                     self.chunk_requests[(int(split[0]), int(split[1]))] = True
                 elif data[1] == 'N':
                     if data[2:] not in self.players:
-                        p = player(True, self.world.blocks)
+                        p = player(True, self.world.blocks, server=self, physics=False)
                         p.name = data[2:]
                         self.players[data[2:]] = p
+                        if p.name == self.name:
+                            self.world.game.player = p
                         logger.log(f'Player {data[2:]} joined')
                     else:
                         logger.log(f'Player {data[2:]} joined multiple times')  # TODO: let clients know about other clients disconnecting
@@ -529,6 +544,9 @@ class client:
 
     def set_block(self, x, y, value):
         self.net.send('AP' + str(x) + ' ' + str(y) + ' ' + value.name)
+
+    def chat(self, text: str):
+        self.net.send('AC' + text)
 
     def exit(self):
         self.net.send('AQ')

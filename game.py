@@ -235,9 +235,9 @@ class Game:
             for p in self.connection.players:
                 # pygame.draw.rect(screen, (255, 0, 0), ((p.x - px) * size, (p.y - py) * size, size, size))
                 # pygame.draw.rect(screen, (255, 0, 0), (round(p.x * size), p.y * size, size, size))
-                print(p.x, p.y)
+                # print(p.x, p.y)
                 pygame.draw.rect(screen, (255, 0, 0),
-                                 (round((p.x - self.player.x) * size), round((p.y - self.player.y + 20) * size), size, size))
+                                 (round((p.x - self.player.x) * size) + 20 * size, round((p.y - self.player.y + 20) * size), size, size))
         elif self.online and not self.server:
             for i in self.connection.players:
                 p = self.connection.players[i]
@@ -384,6 +384,10 @@ class Game:
         self.previous_chats.append(text)
 
         # TODO: send to multiplayer other players
+        if self.online:
+            self.connection.chat(f'<{self.player.name}> {text}')
+            if not self.server:
+                return
 
         if self.player.name is None:
             logger.warn("The player name is None!!")
@@ -453,6 +457,10 @@ class Game:
             y += size
 
     def command(self, command: str):  # TODO: if in multiplayer check permissions
+        if self.online and not self.server:
+            self.error('unimplemented: sending commands to server')
+            return
+
         def _isint(i: str):
             for c in i:
                 if c not in '0123456789-':  # TODO: something like minecraft '~'
@@ -553,7 +561,7 @@ class Game:
         elif split[0] == 'gamerule':
             if len(split) == 1:
                 for rule in self.gameRule.__dict__:
-                    self.chat(rule)
+                    self.info(rule)
             elif _command(split, 'gamerule gamerule int'):
                 if self.gameRule.permissionChangeGamerule:
                     self.gameRule.__dict__[split[1]] = not not int(split[2])
@@ -575,11 +583,13 @@ class Game:
                     self.host()
                 except IOError as e:
                     self.error(str(e))
+                    logger.exception('while creating socket', e)
             elif len(split) == 2:
                 try:
                     self.host(split[1])
                 except IOError as e:
                     self.error(str(e))
+                    logger.exception('while creating socket', e)
             else:
                 self.error(f"Use host as '/host' or '/host ip' not '{command}'")
 
@@ -622,8 +632,8 @@ class Game:
         self.world = noise.world(0, 0, self, gen_new=False, server=self.connection, serving=False)
         self.connection.world = self.world
 
-        self.connection.players[self.connection.name] = net.player(True, self.blocks, server=self.connection, physics=False)
-        self.player = self.connection.players[self.connection.name]
+        # self.connection.players[self.connection.name] = net.player(True, self.blocks, server=self.connection, physics=False)
+        # self.player = self.connection.players[self.connection.name]
 
         self.online = True
         self.server = False
@@ -633,6 +643,8 @@ class Game:
 
         self.world = noise.world(3, 100, self, gen_new=True, server=self.connection, serving=True)
         self.connection.world = self.world
+
+        # self.player.name = self.name
 
         self.online = True
         self.server = True
