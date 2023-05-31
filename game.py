@@ -383,24 +383,21 @@ class Game:
 
         self.previous_chats.append(text)
 
-        # TODO: send to multiplayer other players
         if self.online:
             self.connection.chat(f'<{self.player.name}> {text}')
-            if not self.server:
-                return
 
         if self.player.name is None:
             logger.warn("The player name is None!!")
             self.chat_history.append(Chat("Your player name is null!! (??)", 'e', 'ERROR'))
             return
 
-        if text[0:1] == '/':
-            logger.log(f'<{self.player.name}> ' + text)  # TODO: multiplayer players
+        if text[0:1] == '/' and (self.server if self.online else True):
+            logger.log(f'<{self.player.name}> ' + text)
             self.command(text)
         else:
             self.chat_history.append(Chat(text, 'c', self.player.name))
 
-            logger.log(f'<{self.player.name}> ' + text)  # TODO: multiplayer players
+            logger.log(f'<{self.player.name}> ' + text)
 
     def info(self, *args):
 
