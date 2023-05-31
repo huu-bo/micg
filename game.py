@@ -145,6 +145,7 @@ class Game:
         mouse_pos = pygame.mouse.get_pos()
         mouse_press = pygame.mouse.get_pressed(5)
         keys = pygame.key.get_pressed()
+        kmod = pygame.key.get_mods()
 
         if not self.prompt_shown:
             self.player.key = [keys[pygame.K_w] or keys[pygame.K_UP],
@@ -173,7 +174,7 @@ class Game:
                 b = block.block('air', self.blocks)
                 self.world.set(x, y, b)
                 self.world.to_update.append(b)
-            if not self.world.get(x, y).solid:
+            if not self.world.get(x, y).solid or kmod & pygame.KMOD_CTRL:
                 if mouse_press[0]:
                     if (
                             (
