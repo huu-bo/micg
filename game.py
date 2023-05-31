@@ -209,6 +209,7 @@ class Game:
 
         # world rendering
         # TODO: make a copy of player position because it changes while rendering if online
+        tick = pygame.time.get_ticks()
         for y in range(41):
             for x in range(41):
                 b = self.world.get(x + math.floor(self.player.x - 20), y + math.floor(self.player.y) - 20)
@@ -222,7 +223,11 @@ class Game:
                                         (round((x - self.player.x % 1) * size), round((y - self.player.y % 1) * size)))
 
                     if self.debug['block_update']:
-                        if b in self.world.to_update or b in self.world.to_append:
+                        # if b in self.world.to_update or b in self.world.to_append:
+                        #     pygame.draw.rect(screen, (255, 0, 0),
+                        #                      (round((x - self.player.x % 1) * size),
+                        #                       round((y - self.player.y % 1) * size), size, size), 2)
+                        if abs(b.last_update_tick - tick) < 30:
                             pygame.draw.rect(screen, (255, 0, 0),
                                              (round((x - self.player.x % 1) * size),
                                               round((y - self.player.y % 1) * size), size, size), 2)
