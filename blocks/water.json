@@ -1,0 +1,9 @@
+{
+  "solid": true,
+  "render": true,
+  "max support": -2,
+  "color": [0, 0, 255],
+  "friction": 3,
+
+  "craft": {"ice": 1}
+}

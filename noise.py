@@ -31,7 +31,7 @@ class Random:
             else:
                 # print('less', self.min_gen, i-2, list(range(self.min_gen, i-2)))
                 j = self.min_gen
-                while j != i-2:
+                while j != i-1:
                     self.values[j-1] = self._gen(self.values[j])
                     j -= 1
 
@@ -235,7 +235,7 @@ class Perlin_filtered:
                     self.values[self.max_gen] = self.max_gen_value
             else:
                 j = self.min_gen
-                while j != i - 1:
+                while j != i:
                     d = self.perlin.gen(j)
 
                     if d == self.min_gen_value:
@@ -432,16 +432,20 @@ class world:
             else:
                 self.get(x, y)  # load the chunk
 
-    def update(self, tick: int):
+    def update(self, tick: int) -> int:
+        update_amount = 0
         for b in self.to_update:
             if b.y is not None:
                 if b.y < 40:
                     if b.last_update_tick != tick:
+                        update_amount += 1
                         self.to_append += b.update(self)
                         b.last_update_tick = tick
 
         self.to_update = self.to_append
         self.to_append = []
+
+        return update_amount
 
         # TODO: chunk unloading
 

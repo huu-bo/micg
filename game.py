@@ -68,6 +68,7 @@ class Game:
             'player_info': False,
             'to_update': False,
         }
+        self.blocks_updated = 0
 
         # TODO: players
         # TODO: multiplayer
@@ -185,13 +186,13 @@ class Game:
                     ):
                         b = block.block(self.player.selection, self.blocks)
                         self.world.set(x, y, b)
-                        self.world.to_update.append(b)
+                        # self.world.to_update.append(b)
 
                         if mouse_pos[1] < size * 40 and not self.gameRule.creative:
                             self.player.inventory[self.player.selection] -= 1
 
         if self.server or not self.online:
-            self.world.update(pygame.time.get_ticks())
+            self.blocks_updated = self.world.update(pygame.time.get_ticks())
         else:
             self.world.to_update = []
             self.world.to_append = []
@@ -210,27 +211,21 @@ class Game:
         # world rendering
         # TODO: make a copy of player position because it changes while rendering if online
         tick = pygame.time.get_ticks()
+        px = self.player.x
+        py = self.player.y
         for y in range(41):
             for x in range(41):
-                b = self.world.get(x + math.floor(self.player.x - 20), y + math.floor(self.player.y) - 20)
+                b = self.world.get(x + math.floor(px - 20), y + math.floor(py) - 20)
+                pos = (round((x - px % 1) * size), round((y - py % 1) * size))
                 if b is not None:
                     if b.render:
-                        pygame.draw.rect(screen, b.color,
-                                         (round((x - self.player.x % 1) * size), round((y - self.player.y % 1) * size),
-                                          size, size))
+                        pygame.draw.rect(screen, b.color, pos + (size, size))
                         if self.debug['block_stress']:
-                            screen.blit(self.font.render(str(b.support), True, (100, 0, 0)),
-                                        (round((x - self.player.x % 1) * size), round((y - self.player.y % 1) * size)))
+                            screen.blit(self.font.render(str(b.support), True, (100, 0, 0)), pos)
 
                     if self.debug['block_update']:
-                        # if b in self.world.to_update or b in self.world.to_append:
-                        #     pygame.draw.rect(screen, (255, 0, 0),
-                        #                      (round((x - self.player.x % 1) * size),
-                        #                       round((y - self.player.y % 1) * size), size, size), 2)
                         if abs(b.last_update_tick - tick) < 30:
-                            pygame.draw.rect(screen, (255, 0, 0),
-                                             (round((x - self.player.x % 1) * size),
-                                              round((y - self.player.y % 1) * size), size, size), 2)
+                            pygame.draw.rect(screen, (255, 0, 0), pos + (size, size), 2)
 
         # draw player
         pygame.draw.rect(screen, (255, 255, 0),
@@ -248,7 +243,7 @@ class Game:
             for i in self.connection.players:
                 p = self.connection.players[i]
                 pygame.draw.rect(screen, (255, 0, 0),
-                                 (round((p.x - self.player.x) * size), round((p.y - self.player.x + 20) * size), size, size))
+                                 (round((p.x - self.player.x) * size) + 20 * size, round((p.y - self.player.y + 20) * size), size, size))
 
         # inventory ui
         self.draw_inventory(mouse_pos, mouse_press, mouse_click)
@@ -275,8 +270,8 @@ class Game:
                                          (255, 255, 255)), (10, 25))
             # screen.blit(self.font.render(f'onGround: {self.player}', True, (255, 255, 255)), (10, 55))
 
-        if len(self.world.to_update) > 100 or self.debug['to_update']:
-            screen.blit(self.font.render('processing ' + str(len(self.world.to_update)), True, (255, 255, 255)),
+        if self.blocks_updated > 2000 or self.debug['to_update']:
+            screen.blit(self.font.render('processing ' + str(self.blocks_updated), True, (255, 255, 255)),
                         (10, 10 + 75 * self.debug['player_info']))
 
         self.pre_mouse = mouse_press
@@ -437,8 +432,9 @@ class Game:
         y = size * 40 - size - size * len(self.chat_history)
         for c in self.chat_history:
             if c.type == 'c':
-                color = 255 - c.time
-                color = (color, color, color)
+                # color = 255 - c.time
+                # color = (color, color, color)
+                color = (255, 255, 255)
             elif c.type == 'e':
                 color = (255, 0, 0)
             else:
@@ -448,9 +444,12 @@ class Game:
                 color = (255, 255, 255)
 
             if self.online:
-                self.screen.blit(self.font.render('<' + c.username + '> ' + c.message, True, color), (0, y))
+                s = self.font.render('<' + c.username + '> ' + c.message, True, color)
             else:
-                self.screen.blit(self.font.render(c.message, True, color), (0, y))
+                s = self.font.render(c.message, True, color)
+            if not self.prompt_shown:
+                s.set_alpha(255 - c.time)
+            self.screen.blit(s, (0, y))
 
             if not self.prompt_shown:
                 c.time += 1
