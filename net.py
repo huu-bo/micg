@@ -96,7 +96,6 @@ class player:
         self.xv = 0
         self.yv = 0
 
-        self.queue = []  # placing/breaking blocks
         self.key = [False, False, False, False]  # up, left, down, right
 
         self.name = None
@@ -209,6 +208,13 @@ class player:
             else:
                 friction = 2
             self.xv /= friction
+
+        if self.online and self.phy:
+            packet = f'IM{self.x} {self.y} {self.name}'
+            if type(self.server) == Server:
+                self.server.send_all(packet)
+            else:
+                self.server.s.send_all_except(packet, self.server.pipe)
 
     def die(self, keep_inventory):
 
@@ -328,7 +334,16 @@ class server_client:
         if data[0] == 'I':
             if data[1] == 'N':
                 had_name = self.name != 'NAME_NOT_SENT'
-                if ' ' not in data[2:]:
+                duplicate = False
+
+                print(self.s.players)
+                for p in self.s.players:
+                    if data[2:] == p.name:
+                        duplicate = True
+                if data[2:] == self.world.game.player.name:
+                    duplicate = True
+
+                if ' ' not in data[2:] and not duplicate:
                     self.name = data[2:]
                     self.net.send('IN' + self.name)
                 else:
@@ -339,6 +354,7 @@ class server_client:
                     # let all the other clients that are not this client know that this client exists
                     self.s.send_all_except('IN' + self.name, self.pipe)
                 logger.log(f'{self.name} joined')
+                self.net.send(f'IN{self.world.game.player.name}')
             elif data[1] == 'B':
                 split = data[2:].split(' ')
                 logger.warn('block info deprecated')
@@ -520,6 +536,17 @@ class client:
                         logger.warn(f"Player '{name}' moved but does not exist")
                 else:
                     logger.warn(f'Incorrect information packet type: {data}')
+
+            elif data[0] == 'E':
+                if data[1] == 'N':
+                    name = self.name
+                    self.name = self.name.replace(' ', '') + '+'
+                    self.net.send('IN' + self.name)
+                    self.players[self.name] = self.players[name]
+                    self.players.pop(name)
+                    self.players[self.name].name = self.name
+                else:
+                    logger.error(f"Unknown error packet: '{data}'")
 
             else:
                 logger.warn(f'Incorrect packet type: {data}')

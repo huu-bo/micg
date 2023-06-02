@@ -112,7 +112,7 @@ class Game:
                 file.seek(0)
                 logger.error("'" + str(file.read()) + "'")
 
-            self.player.name = str(data.setdefault('username', 'NO USERNAME'))
+            self.player.name = str(data.get('username', 'NO USERNAME'))
 
     def update(self) -> bool:
         """:returns a bool which is False when the game should quit"""
@@ -640,13 +640,15 @@ class Game:
         self.online = True
         self.server = False
 
-    def host(self, ip='localhost'):
+    def host(self, ip='localhost'):  # TODO: some way to host with a save
         self.connection = net.Server(None, ip=ip)
 
         self.world = noise.world(3, 100, self, gen_new=True, server=self.connection, serving=True)
         self.connection.world = self.world
 
-        # self.player.name = self.name
+        name = self.player.name
+        self.player = net.player(True, self.blocks, server=self.connection, physics=True)
+        self.player.name = name
 
         self.online = True
         self.server = True

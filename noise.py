@@ -234,6 +234,10 @@ class Perlin_filtered:
                     self.max_gen += 1
                     self.values[self.max_gen] = self.max_gen_value
             else:
+                if self.min_gen < i:
+                    logger.warn(f'warning: discrepancy between min_gen and max_gen, returning min_gen_value')
+                    return self.min_gen_value
+
                 j = self.min_gen
                 while j != i:
                     d = self.perlin.gen(j)
