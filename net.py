@@ -110,8 +110,6 @@ class player:
         # TODO: property for if item should be mineable and be able to put in the inventory
 
     def physics(self, world):
-        # TODO: some way to enable flying
-
         if not self.phy:
             # self.server.net.send(f'AM{self.x} {self.y}')
             packet = 'AK'
@@ -302,7 +300,7 @@ class Server:
         for p in self.pipes:
             p.send(data)
 
-    def send_all_except(self, data, exception):  # TODO: broken
+    def send_all_except(self, data, exception):
         for p in self.pipes:
             if p is not exception:
                 p.send(data)
@@ -315,11 +313,11 @@ class server_client:
     def __init__(self, c: socket.socket, s: Server, p: player, pi):
         self.c = c
         self.s = s
-        self.r = True  # TODO: what is 'r'
+        self.running = True
         self.name = 'NAME_NOT_SENT'
         self.player = p
         self.player.server = self
-        self.pipe = pi
+        self.pipe: pipe = pi
         self.net = net(c)
 
         self.world: noise.world = self.s.world
@@ -348,7 +346,7 @@ class server_client:
                     self.net.send('IN' + self.name)
                 else:
                     logger.error(f"incorrect name '{data[2:]}'")
-                    if self.r:
+                    if self.running:
                         self.net.send('EN')
                 if not had_name:
                     # let all the other clients that are not this client know that this client exists
@@ -406,7 +404,7 @@ class server_client:
             logger.error(f"Unknown packet type: '{data}'")
 
     def run(self):
-        while self.r:
+        while self.running:
             # print('waiting for packet:', self.name)
             try:
                 for p in self.net.recv(self.c.recv(1024)):
@@ -430,7 +428,7 @@ class server_client:
     def close(self):
         self.c.close()
         self.s.remove(self)
-        self.r = False
+        self.running = False
 
 
 class client:

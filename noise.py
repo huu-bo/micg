@@ -1,7 +1,7 @@
 import random
 import math
-import block
 
+import block
 import logger
 import net
 
@@ -507,6 +507,7 @@ class world:
         logger.log('Loaded!')
 
     def serialize_chunk(self, x, y):
+        # TODO: a way to make client and server agree on block ids and send binary data instead of csv
         out = ''
         if (x, y) not in self.world:
             self.gen_chunk(x, y)

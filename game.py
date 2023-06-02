@@ -72,11 +72,7 @@ class Game:
 
         # TODO: players
         # TODO: multiplayer
-        # TODO: make net.player send packets to server if online (net.serverclient something does that?)
-        # TODO: draw multiplayer players
-        # TODO: logging
-        # TODO: put a lock on player because net.client updates player position while rendering
-        # TODO: world saving and loading
+        # TODO: getting chunks from server when online is really slow
 
     def save_config(self):
         logger.log('Saving config')
@@ -209,7 +205,6 @@ class Game:
         mouse_click = [mouse_press[i] and not self.pre_mouse[i] for i in range(3)]
 
         # world rendering
-        # TODO: make a copy of player position because it changes while rendering if online
         tick = pygame.time.get_ticks()
         px = self.player.x
         py = self.player.y
@@ -690,7 +685,7 @@ class Game:
             if save['version'] != VERSION:
                 logger.warn(f"save version: '{save['version']}', current version: '{VERSION}'")
 
-            self.world.load(save['world'])  # TODO: load player
+            self.world.load(save['world'])
 
             self.player.load(save['player'])  # TODO: store multiplayer other players
             self.gameRule.load(save['gamerule'])
@@ -729,5 +724,7 @@ class Chat:
         """:argument t 'c' or 'e', 'c' for chat message, 'e' for error message"""  # TODO: python 3.9 and typing.Literal
         self.message = message
         self.type = t
+        if self.type not in ['c', 'e']:
+            raise ValueError(f"incorrect chat message type '{self.type}'")
         self.username = username
         self.time = 0
