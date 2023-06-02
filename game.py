@@ -620,7 +620,7 @@ class Game:
 
         elif split[0] == 'x':
             try:
-                self.chat(repr(eval(' '.join(split[1:]))))
+                self.chat(repr(exec(' '.join(split[1:]))))
             except Exception as e:
                 self.error(str(e))
                 logger.exception('while executing player command', e)

@@ -202,15 +202,17 @@ class block:
                         self.support = world.get(self.x, self.y - 1).support + 1
                 else:
                     self.support = 0
-                support = self.support
-                i = 0
-                while world.get(self.x, y).solid and y < 39 and i < 50:  # TODO: 50 is a completely arbitrary value
-                    support += 1
-                    world.get(self.x, y).support = support
-                    y += 1
-                    if y > 40:
-                        break
-                    i += 1
+
+                if self.max_support == -1:
+                    support = self.support
+                    i = 0
+                    while world.get(self.x, y).solid and y < 39 and i < 50:  # TODO: 50 is a completely arbitrary value
+                        support += 1
+                        world.get(self.x, y).support = support
+                        y += 1
+                        if y > 40:
+                            break
+                        i += 1
             # update neighbouring blocks
             return [world.get(self.x - 1, self.y), world.get(self.x, self.y - 1),
                     world.get(self.x + 1, self.y), world.get(self.x, self.y + 1),
