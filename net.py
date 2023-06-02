@@ -336,7 +336,7 @@ class server_client:
                 had_name = self.name != 'NAME_NOT_SENT'
                 duplicate = False
 
-                print(self.s.players)
+                # print(self.s.players)
                 for p in self.s.players:
                     if data[2:] == p.name:
                         duplicate = True
