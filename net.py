@@ -272,7 +272,7 @@ class Server:
             try:
                 c, address = self.server.accept()
                 logger.log(f'Accepted {c}, {address}')
-                p = player(True, self.world.blocks)
+                p = player(True, self.world.blocks, server=self)
                 self.players.append(p)
                 pi = pipe()
                 self.pipes.append(pi)
@@ -314,7 +314,7 @@ class server_client:
         self.c = c
         self.s = s
         self.running = True
-        self.name = 'NAME_NOT_SENT'
+        self.name = None
         self.player = p
         self.player.server = self
         self.pipe: pipe = pi
@@ -331,7 +331,6 @@ class server_client:
         # info("client: '" + self.name + "' packet: '" + data + "'")
         if data[0] == 'I':
             if data[1] == 'N':
-                had_name = self.name != 'NAME_NOT_SENT'
                 duplicate = False
 
                 # print(self.s.players)
@@ -341,18 +340,19 @@ class server_client:
                 if data[2:] == self.world.game.player.name:
                     duplicate = True
 
-                if ' ' not in data[2:] and not duplicate:
+                if ' ' not in data[2:] and not duplicate:  # valid name
                     self.name = data[2:]
                     self.net.send('IN' + self.name)
-                else:
+
+                    # let all the other clients that are not this client know that this client exists
+                    self.s.send_all_except('IN' + self.name, self.pipe)
+
+                    logger.log(f'{self.name} joined')
+                    self.net.send(f'IN{self.world.game.player.name}')
+                else:  # invalid name
                     logger.error(f"incorrect name '{data[2:]}'")
                     if self.running:
                         self.net.send('EN')
-                if not had_name:
-                    # let all the other clients that are not this client know that this client exists
-                    self.s.send_all_except('IN' + self.name, self.pipe)
-                logger.log(f'{self.name} joined')
-                self.net.send(f'IN{self.world.game.player.name}')
             elif data[1] == 'B':
                 split = data[2:].split(' ')
                 logger.warn('block info deprecated')
@@ -404,6 +404,7 @@ class server_client:
             logger.error(f"Unknown packet type: '{data}'")
 
     def run(self):
+        player_update_ticks_ago = 0
         while self.running:
             # print('waiting for packet:', self.name)
             try:
@@ -412,18 +413,25 @@ class server_client:
             except socket.timeout:
                 pass
 
+            if self.name is None:
+                continue  # not done connecting
+
             data = self.pipe.recv()
             if data is not None:
                 for packet in data:
                     # if data[:2] == 'AP':
                     self.net.send(packet)
 
-            if self.player.xv != 0 or self.player.yv != 0:
+            if self.player.xv != 0 or self.player.yv != 0 or player_update_ticks_ago > 5:
                 packet = 'AM' + str(self.player.x) + ' ' + str(self.player.y)
                 self.net.send(packet)
 
                 packet = 'IM' + str(self.player.x) + ' ' + str(self.player.y) + ' ' + self.name
                 self.s.send_all(packet)
+
+                player_update_ticks_ago = 0
+
+            player_update_ticks_ago += 1
 
     def close(self):
         self.c.close()
@@ -537,12 +545,13 @@ class client:
 
             elif data[0] == 'E':
                 if data[1] == 'N':
-                    name = self.name
+                    # name = self.name
                     self.name = self.name.replace(' ', '') + '+'
                     self.net.send('IN' + self.name)
-                    self.players[self.name] = self.players[name]
-                    self.players.pop(name)
-                    self.players[self.name].name = self.name
+                    # self.players[self.name] = self.players[name]
+                    # self.players.pop(name)
+                    # self.players[self.name].name = self.name
+                    print(self.world.game.players is self.players)
                 else:
                     logger.error(f"Unknown error packet: '{data}'")
 
